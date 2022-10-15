@@ -1,4 +1,5 @@
 #### What type of PR is this?
+
 <!--
 Add one of the following kinds:
 
@@ -15,15 +16,15 @@ test: Adding missing tests or correcting existing tests
 chore: Changes to the build process or auxiliary tools and libraries such as documentation generation
 -->
 
-#### What this PR does / why we need it (en: English/zh: Chinese):
+#### What this PR does / why we need it (English/Chinese):
+
 <!--
 The description will be attached in Release Notes, 
 so please describe it from user-oriented.
 -->
-en: 
-zh:
 
 #### Which issue(s) this PR fixes:
+
 <!--
 *Automatically closes linked issue when PR is merged.
 Eg: `Fixes #<issue number>`, or `Fixes (paste link of issue)`.
