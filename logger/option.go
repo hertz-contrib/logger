@@ -2,22 +2,21 @@ package logger
 
 import (
 	"context"
-	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"time"
-)
 
-const defaultFormat = "${time} ${status} ${latency} ${method} ${path}"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+)
 
 type (
 	// options defines the config for middleware.
 	options struct {
-		Format           string
-		TimeFormat       string
-		TimeZone         string
-		TimeInterval     time.Duration
-		enableLatency    bool
-		outFunc          func(ctx context.Context, format string, v ...interface{})
+		format           string
+		timeFormat       string
+		timeZone         string
+		timeInterval     time.Duration
 		timeZoneLocation *time.Location
+		enableLatency    bool
+		accessLogFunc    func(ctx context.Context, format string, v ...interface{})
 	}
 
 	Option func(o *options)
@@ -25,11 +24,11 @@ type (
 
 func newOption(opts ...Option) *options {
 	cfg := &options{
-		Format:       defaultFormat,
-		TimeFormat:   "15:04:05",
-		TimeZone:     "Local",
-		TimeInterval: 500 * time.Millisecond,
-		outFunc:      hlog.CtxInfof,
+		format:        defaultFormat,
+		timeFormat:    "15:04:05",
+		timeZone:      "Local",
+		timeInterval:  500 * time.Millisecond,
+		accessLogFunc: hlog.CtxInfof,
 	}
 
 	// Return default config if nothing provided
@@ -46,24 +45,24 @@ func newOption(opts ...Option) *options {
 
 func WithFormat(s string) Option {
 	return func(o *options) {
-		o.Format = s
+		o.format = s
 	}
 }
 
 func WithTimeFormat(s string) Option {
 	return func(o *options) {
-		o.TimeFormat = s
+		o.timeFormat = s
 	}
 }
 
 func WithTimeInterval(t time.Duration) Option {
 	return func(o *options) {
-		o.TimeInterval = t
+		o.timeInterval = t
 	}
 }
 
-func WithOutputFunc(f func(ctx context.Context, format string, v ...interface{})) Option {
+func WithAccessLogFunc(f func(ctx context.Context, format string, v ...interface{})) Option {
 	return func(o *options) {
-		o.outFunc = f
+		o.accessLogFunc = f
 	}
 }

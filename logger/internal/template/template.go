@@ -51,9 +51,9 @@ func (t *Template) Reset(template, startTag, endTag string) error {
 		panic("endTag cannot be empty")
 	}
 
-	s := unsafeString2Bytes(template)
-	a := unsafeString2Bytes(startTag)
-	b := unsafeString2Bytes(endTag)
+	s := s2b(template)
+	a := s2b(startTag)
+	b := s2b(endTag)
 
 	tagsCount := bytes.Count(s, a)
 	if tagsCount == 0 {
@@ -81,18 +81,18 @@ func (t *Template) Reset(template, startTag, endTag string) error {
 			return fmt.Errorf("cannot find end tag=%q in the template=%q starting from %q", endTag, template, s)
 		}
 
-		t.tags = append(t.tags, unsafeBytes2String(s[:n]))
+		t.tags = append(t.tags, b2s(s[:n]))
 		s = s[n+len(b):]
 	}
 
 	return nil
 }
 
-func unsafeBytes2String(b []byte) string {
+func b2s(b []byte) string {
 	return string(b)
 }
 
-func unsafeString2Bytes(s string) (b []byte) {
+func s2b(s string) (b []byte) {
 	return []byte(s)
 }
 
@@ -109,7 +109,7 @@ func (t *Template) ExecuteFunc(w io.Writer, f TagFunc) (int64, error) {
 
 	n := len(t.texts) - 1
 	if n == -1 {
-		ni, err := w.Write(unsafeString2Bytes(t.template))
+		ni, err := w.Write(s2b(t.template))
 		return int64(ni), err
 	}
 

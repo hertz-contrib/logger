@@ -15,65 +15,33 @@ import (
 	"github.com/hertz-contrib/logger/logger/internal/template"
 )
 
-// Logger variables
-const (
-	TagPid               = "pid"
-	TagTime              = "time"
-	TagReferer           = "referer"
-	TagProtocol          = "protocol"
-	TagPort              = "port"
-	TagIP                = "ip"
-	TagIPs               = "ips"
-	TagHost              = "host"
-	TagMethod            = "method"
-	TagPath              = "path"
-	TagURL               = "url"
-	TagUA                = "ua"
-	TagLatency           = "latency"
-	TagStatus            = "status"
-	TagResBody           = "resBody"
-	TagReqHeaders        = "reqHeaders"
-	TagQueryStringParams = "queryParams"
-	TagBody              = "body"
-	TagBytesSent         = "bytesSent"
-	TagBytesReceived     = "bytesReceived"
-	TagRoute             = "route"
-
-	TagReqHeader  = "reqHeader:"
-	TagRespHeader = "respHeader:"
-	TagContext    = "context:"
-	TagQuery      = "query:"
-	TagForm       = "form:"
-	TagCookie     = "cookie:"
-)
-
 type bufFunc func(buf *bytebufferpool.ByteBuffer) (int, error)
 
-func NewLogger(opts ...Option) app.HandlerFunc {
+func NewLoggerMiddleware(opts ...Option) app.HandlerFunc {
 	cfg := newOption(opts...)
 
 	// Get timezone location
-	tz, err := time.LoadLocation(cfg.TimeZone)
+	tz, err := time.LoadLocation(cfg.timeZone)
 	if err != nil || tz == nil {
 		cfg.timeZoneLocation = time.Local
 	} else {
 		cfg.timeZoneLocation = tz
 	}
 	// Check if format contains latency
-	cfg.enableLatency = strings.Contains(cfg.Format, "${latency}")
+	cfg.enableLatency = strings.Contains(cfg.format, "${latency}")
 
-	tmpl := template.New(cfg.Format, "${", "}")
+	tmpl := template.New(cfg.format, "${", "}")
 
 	// Create correct timeformat
 	var timestamp atomic.Value
-	timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.TimeFormat))
+	timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
 
 	// Update date/time every 750 milliseconds in a separate go routine
-	if strings.Contains(cfg.Format, "${time}") {
+	if strings.Contains(cfg.format, "${time}") {
 		go func() {
 			for {
-				time.Sleep(cfg.TimeInterval)
-				timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.TimeFormat))
+				time.Sleep(cfg.timeInterval)
+				timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
 			}
 		}()
 	}
@@ -82,8 +50,6 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 	pid := strconv.Itoa(os.Getpid())
 
 	// Set variables
-	//var mu sync.Mutex
-
 	errPadding := 15
 	errPaddingStr := strconv.Itoa(errPadding)
 
@@ -180,9 +146,9 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 			},
 		}
 
-		if cfg.Format == defaultFormat {
+		if cfg.format == defaultFormat {
 			formatErr := ""
-			// Format log to buffer
+			// format log to buffer
 			_, _ = buf.WriteString(fmt.Sprintf(" %s | %3d | %7v | %15s | %-7s | %-"+errPaddingStr+"s %s\n",
 				timestamp.Load().(string),
 				c.Response.StatusCode(),
@@ -193,7 +159,7 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 				formatErr,
 			))
 
-			cfg.outFunc(ctx, buf.String())
+			cfg.accessLogFunc(ctx, buf.String())
 			// Put buffer back to pool
 			bytebufferpool.Put(buf)
 			return
@@ -225,7 +191,7 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 			_, _ = buf.WriteString(err.Error())
 		}
 
-		cfg.outFunc(ctx, buf.String())
+		cfg.accessLogFunc(ctx, buf.String())
 		// Put buffer back to pool
 		bytebufferpool.Put(buf)
 	}
