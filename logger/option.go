@@ -2,13 +2,14 @@ package logger
 
 import (
 	"context"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"time"
 )
 
-const defaultFormat = "${time} ${status} ${latency} ${method} ${path}\n"
+const defaultFormat = "${time} ${status} ${latency} ${method} ${path}"
 
-// options defines the config for middleware.
 type (
+	// options defines the config for middleware.
 	options struct {
 		Format           string
 		TimeFormat       string
@@ -28,7 +29,7 @@ func newOption(opts ...Option) *options {
 		TimeFormat:   "15:04:05",
 		TimeZone:     "Local",
 		TimeInterval: 500 * time.Millisecond,
-		//Output:       os.Stdout,
+		outFunc:      hlog.CtxInfof,
 	}
 
 	// Return default config if nothing provided

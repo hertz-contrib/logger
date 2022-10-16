@@ -31,20 +31,23 @@ const (
 	TagUA                = "ua"
 	TagLatency           = "latency"
 	TagStatus            = "status"
+	TagResBody           = "resBody"
 	TagReqHeaders        = "reqHeaders"
 	TagQueryStringParams = "queryParams"
+	TagBody              = "body"
 	TagBytesSent         = "bytesSent"
 	TagBytesReceived     = "bytesReceived"
 	TagRoute             = "route"
 
-	// DEPRECATED: Use TagReqHeader instead
-	TagHeader     = "header:"
 	TagReqHeader  = "reqHeader:"
 	TagRespHeader = "respHeader:"
+	TagContext    = "context:"
 	TagQuery      = "query:"
 	TagForm       = "form:"
 	TagCookie     = "cookie:"
 )
+
+type bufFunc func(buf *bytebufferpool.ByteBuffer) (int, error)
 
 func NewLogger(opts ...Option) app.HandlerFunc {
 	cfg := newOption(opts...)
@@ -100,6 +103,83 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 		// Get new buffer
 		buf := bytebufferpool.Get()
 
+		tags := map[string]bufFunc{
+			TagContext: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString("")
+			},
+			TagPid: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(pid)
+			},
+			TagTime: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(timestamp.Load().(string))
+			},
+			TagReferer: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(c.Request.Header.Get("Referer"))
+			},
+			TagProtocol: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Request.URI().Scheme()))
+			},
+			TagPort: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				host := string(c.Request.URI().Host())
+				split := strings.Split(host, ":")
+				return buf.WriteString(split[1])
+			},
+			TagIP: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				host := string(c.Request.URI().Host())
+				split := strings.Split(host, ":")
+				return buf.WriteString(split[0])
+			},
+			TagIPs: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(c.Request.Header.Get("X-Forwarded-For"))
+			},
+			TagResBody: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Response.Body()))
+			},
+			TagHost: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Request.URI().Host()))
+			},
+			TagPath: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Request.Path()))
+			},
+			TagURL: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Request.Header.RequestURI()))
+			},
+			TagUA: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(c.Request.Header.Get("User-Agent"))
+			},
+			TagBody: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.Write(c.Request.Body())
+			},
+			TagLatency: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(fmt.Sprintf("%7v", stop.Sub(start).Round(time.Millisecond)))
+			},
+			TagBytesSent: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return appendInt(buf, len(c.Response.Body()))
+			},
+			TagBytesReceived: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return appendInt(buf, len(c.Request.Body()))
+			},
+			TagRoute: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Path()))
+			},
+			TagStatus: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return appendInt(buf, c.Response.StatusCode())
+			},
+			TagReqHeaders: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				reqHeaders := make([]string, 0)
+				c.Request.Header.VisitAll(func(k, v []byte) {
+					reqHeaders = append(reqHeaders, string(k)+"="+string(v))
+				})
+				return buf.Write([]byte(strings.Join(reqHeaders, "&")))
+			},
+			TagQueryStringParams: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(c.Request.URI().QueryArgs().String())
+			},
+			TagMethod: func(buf *bytebufferpool.ByteBuffer) (int, error) {
+				return buf.WriteString(string(c.Method()))
+			},
+		}
+
 		if cfg.Format == defaultFormat {
 			formatErr := ""
 			// Format log to buffer
@@ -113,9 +193,6 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 				formatErr,
 			))
 
-			// Write buffer to output
-			//_, _ = cfg.Output.Write(buf.Bytes())
-			//hlog.CtxInfof(ctx, buf.String())
 			cfg.outFunc(ctx, buf.String())
 			// Put buffer back to pool
 			bytebufferpool.Put(buf)
@@ -123,56 +200,12 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 		}
 
 		_, err := tmpl.ExecuteFunc(buf, func(w io.Writer, tag string) (int, error) {
-			switch tag {
-			case TagPid:
-				return buf.WriteString(pid)
-			case TagTime:
-				return buf.WriteString(timestamp.Load().(string))
-			case TagReferer:
-				return buf.WriteString(c.Request.Header.Get("Referer"))
-			case TagProtocol:
-				return buf.WriteString(string(c.Request.URI().Scheme()))
-			case TagPort:
-				host := string(c.Request.URI().Host())
-				split := strings.Split(host, ":")
-				return buf.WriteString(split[1])
-			case TagIP:
-				host := string(c.Request.URI().Host())
-				split := strings.Split(host, ":")
-				return buf.WriteString(split[0])
-			case TagIPs:
-				return buf.WriteString(c.Request.Header.Get("X-Forwarded-For"))
-			case TagHost:
-				return buf.WriteString(string(c.Request.URI().Host()))
-			case TagPath:
-				return buf.WriteString(string(c.Request.Path()))
-			case TagURL:
-				return buf.WriteString(string(c.Request.Header.RequestURI()))
-			case TagUA:
-				return buf.WriteString(c.Request.Header.Get("User-Agent"))
-			case TagLatency:
-				return buf.WriteString(fmt.Sprintf("%7v", stop.Sub(start).Round(time.Millisecond)))
-			case TagBytesReceived:
-				return appendInt(buf, len(c.Request.Body()))
-			case TagBytesSent:
-				return appendInt(buf, len(c.Response.Body()))
-			case TagRoute:
-				return buf.WriteString(string(c.Path()))
-			case TagStatus:
-				return appendInt(buf, c.Response.StatusCode())
-			case TagReqHeaders:
-				reqHeaders := make([]string, 0)
-				c.Request.Header.VisitAll(func(k, v []byte) {
-					reqHeaders = append(reqHeaders, string(k)+"="+string(v))
-				})
-				return buf.Write([]byte(strings.Join(reqHeaders, "&")))
-			case TagQueryStringParams:
-				return buf.WriteString(c.Request.URI().QueryArgs().String())
-			case TagMethod:
-				return buf.WriteString(string(c.Method()))
-			default:
-				// Check if we have a value tag i.e.: "reqHeader:x-key"
+			if f, ok := tags[tag]; ok {
+				return f(buf)
+			} else {
 				switch {
+				case strings.HasPrefix(tag, TagContext):
+					return buf.WriteString(c.GetString(tag[8:]))
 				case strings.HasPrefix(tag, TagReqHeader):
 					return buf.WriteString(c.Request.Header.Get(tag[10:]))
 				case strings.HasPrefix(tag, TagRespHeader):
@@ -191,16 +224,7 @@ func NewLogger(opts ...Option) app.HandlerFunc {
 		if err != nil {
 			_, _ = buf.WriteString(err.Error())
 		}
-		// Write buffer to output
 
-		//if _, err := cfg.Output.Write(buf.Bytes()); err != nil {
-		//	// Write error to output
-		//	if _, err := cfg.Output.Write([]byte(err.Error())); err != nil {
-		//		// There is something wrong with the given io.Writer
-		//		fmt.Fprintf(os.Stderr, "Failed to write to log, %v\n", err)
-		//	}
-		//}
-		//hlog.CtxInfof(ctx, buf.String())
 		cfg.outFunc(ctx, buf.String())
 		// Put buffer back to pool
 		bytebufferpool.Put(buf)
