@@ -1,4 +1,4 @@
-module github.com/hertz-contrib/logger/logger
+module github.com/hertz-contrib/logger/accesslog
 
 go 1.16
 

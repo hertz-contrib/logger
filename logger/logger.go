@@ -7,18 +7,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/bytebufferpool"
-	"github.com/hertz-contrib/logger/logger/internal/template"
+	"github.com/hertz-contrib/logger/accesslog/internal/fasttemplate"
 )
 
-type bufFunc func(buf *bytebufferpool.ByteBuffer) (int, error)
-
 func NewLoggerMiddleware(opts ...Option) app.HandlerFunc {
-	cfg := newOption(opts...)
+	cfg := newOptions(opts...)
 
 	// Get timezone location
 	tz, err := time.LoadLocation(cfg.timeZone)
@@ -28,30 +25,25 @@ func NewLoggerMiddleware(opts ...Option) app.HandlerFunc {
 		cfg.timeZoneLocation = tz
 	}
 	// Check if format contains latency
-	cfg.enableLatency = strings.Contains(cfg.format, "${latency}")
+	cfg.enableLatency = strings.Contains(cfg.format, cfg.withDelims("latency"))
 
-	tmpl := template.New(cfg.format, "${", "}")
+	tmpl := fasttemplate.New(cfg.format, cfg.leftDelim, cfg.rightDelim)
 
 	// Create correct timeformat
-	var timestamp atomic.Value
-	timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
+	var timestamp string
 
 	// Update date/time every 750 milliseconds in a separate go routine
-	if strings.Contains(cfg.format, "${time}") {
+	if strings.Contains(cfg.format, cfg.withDelims("time")) {
 		go func() {
 			for {
 				time.Sleep(cfg.timeInterval)
-				timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
+				timestamp = time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat)
 			}
 		}()
 	}
 
 	// Set PID once
 	pid := strconv.Itoa(os.Getpid())
-
-	// Set variables
-	errPadding := 15
-	errPaddingStr := strconv.Itoa(errPadding)
 
 	return func(ctx context.Context, c *app.RequestContext) {
 		var start, stop time.Time
@@ -68,121 +60,36 @@ func NewLoggerMiddleware(opts ...Option) app.HandlerFunc {
 
 		// Get new buffer
 		buf := bytebufferpool.Get()
+		defer bytebufferpool.Put(buf)
 
-		tags := map[string]bufFunc{
-			TagContext: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString("")
-			},
-			TagPid: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(pid)
-			},
-			TagTime: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(timestamp.Load().(string))
-			},
-			TagReferer: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(c.Request.Header.Get("Referer"))
-			},
-			TagProtocol: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Request.URI().Scheme()))
-			},
-			TagPort: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				host := string(c.Request.URI().Host())
-				split := strings.Split(host, ":")
-				return buf.WriteString(split[1])
-			},
-			TagIP: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				host := string(c.Request.URI().Host())
-				split := strings.Split(host, ":")
-				return buf.WriteString(split[0])
-			},
-			TagIPs: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(c.Request.Header.Get("X-Forwarded-For"))
-			},
-			TagResBody: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Response.Body()))
-			},
-			TagHost: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Request.URI().Host()))
-			},
-			TagPath: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Request.Path()))
-			},
-			TagURL: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Request.Header.RequestURI()))
-			},
-			TagUA: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(c.Request.Header.Get("User-Agent"))
-			},
-			TagBody: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.Write(c.Request.Body())
-			},
-			TagLatency: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(fmt.Sprintf("%7v", stop.Sub(start).Round(time.Millisecond)))
-			},
-			TagBytesSent: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return appendInt(buf, len(c.Response.Body()))
-			},
-			TagBytesReceived: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return appendInt(buf, len(c.Request.Body()))
-			},
-			TagRoute: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Path()))
-			},
-			TagStatus: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return appendInt(buf, c.Response.StatusCode())
-			},
-			TagReqHeaders: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				reqHeaders := make([]string, 0)
-				c.Request.Header.VisitAll(func(k, v []byte) {
-					reqHeaders = append(reqHeaders, string(k)+"="+string(v))
-				})
-				return buf.Write([]byte(strings.Join(reqHeaders, "&")))
-			},
-			TagQueryStringParams: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(c.Request.URI().QueryArgs().String())
-			},
-			TagMethod: func(buf *bytebufferpool.ByteBuffer) (int, error) {
-				return buf.WriteString(string(c.Method()))
-			},
+		Tags[TagPid] = func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
+			return buf.WriteString(pid)
+		}
+		Tags[TagTime] = func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
+			return buf.WriteString(timestamp)
+		}
+		Tags[TagLatency] = func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
+			return buf.WriteString(fmt.Sprintf("%7v", stop.Sub(start).Round(time.Millisecond)))
 		}
 
 		if cfg.format == defaultFormat {
-			formatErr := ""
 			// format log to buffer
-			_, _ = buf.WriteString(fmt.Sprintf(" %s | %3d | %7v | %15s | %-7s | %-"+errPaddingStr+"s %s\n",
-				timestamp.Load().(string),
+			_, _ = buf.WriteString(fmt.Sprintf(" %s | %3d | %7v | %15s | %-7s | %-s ",
+				timestamp,
 				c.Response.StatusCode(),
 				stop.Sub(start).Round(time.Millisecond),
 				c.Request.URI().Host(),
 				c.Method(),
 				c.Path(),
-				formatErr,
 			))
 
 			cfg.accessLogFunc(ctx, buf.String())
-			// Put buffer back to pool
-			bytebufferpool.Put(buf)
 			return
 		}
 
 		_, err := tmpl.ExecuteFunc(buf, func(w io.Writer, tag string) (int, error) {
-			if f, ok := tags[tag]; ok {
-				return f(buf)
-			} else {
-				switch {
-				case strings.HasPrefix(tag, TagContext):
-					return buf.WriteString(c.GetString(tag[8:]))
-				case strings.HasPrefix(tag, TagReqHeader):
-					return buf.WriteString(c.Request.Header.Get(tag[10:]))
-				case strings.HasPrefix(tag, TagRespHeader):
-					return buf.WriteString(c.Response.Header.Get(tag[11:]))
-				case strings.HasPrefix(tag, TagQuery):
-					return buf.WriteString(c.Query(tag[6:]))
-				case strings.HasPrefix(tag, TagForm):
-					return buf.WriteString(string(c.FormValue(tag[5:])))
-				case strings.HasPrefix(tag, TagCookie):
-					return buf.WriteString(string(c.Cookie(tag[7:])))
-				}
+			if function, ok := Tags[tag]; ok {
+				return function(ctx, c, buf)
 			}
 			return 0, nil
 		})
@@ -192,8 +99,6 @@ func NewLoggerMiddleware(opts ...Option) app.HandlerFunc {
 		}
 
 		cfg.accessLogFunc(ctx, buf.String())
-		// Put buffer back to pool
-		bytebufferpool.Put(buf)
 	}
 }
 
