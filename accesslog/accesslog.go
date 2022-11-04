@@ -48,6 +48,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -65,14 +66,14 @@ func New(opts ...Option) app.HandlerFunc {
 	tmpl := fasttemplate.New(cfg.format, "${", "}")
 
 	// Create correct time format
-	var timestamp string
+	var timestamp atomic.Value
 
 	// Update date/time every 500 milliseconds in a separate go routine
 	if strings.Contains(cfg.format, "${time}") {
 		go func() {
 			for {
 				time.Sleep(cfg.timeInterval)
-				timestamp = time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat)
+				timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
 			}
 		}()
 	}
@@ -83,7 +84,7 @@ func New(opts ...Option) app.HandlerFunc {
 		return buf.WriteString(pid)
 	}
 	Tags[TagTime] = func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
-		return buf.WriteString(timestamp)
+		return buf.WriteString(timestamp.Load().(string))
 	}
 
 	return func(ctx context.Context, c *app.RequestContext) {
