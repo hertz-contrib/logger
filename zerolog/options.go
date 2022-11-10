@@ -45,12 +45,14 @@ func newOptions(log zerolog.Logger, options []Opt) *Options {
 	return opts
 }
 
+// WithOutput allows to specify the output of the logger. By default, it is set to os.Stdout.
 func WithOutput(out io.Writer) Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Logger().Output(out).With()
 	}
 }
 
+// WithLevel allows to specify the level of the logger. By default, it is set to WarnLevel.
 func WithLevel(level hlog.Level) Opt {
 	lvl := matchHlogLevel(level)
 	return func(opts *Options) {
@@ -59,25 +61,28 @@ func WithLevel(level hlog.Level) Opt {
 	}
 }
 
+// WithField adds a field to the logger's context
 func WithField(name string, value interface{}) Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Interface(name, value)
 	}
 }
 
+// WithFields adds fields to the logger's context
 func WithFields(fields map[string]interface{}) Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Fields(fields)
 	}
 }
 
+// WithTimestamp adds a timestamp field to the logger's context
 func WithTimestamp() Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Timestamp()
 	}
 }
 
-// WithFormattedTimestamp adds a timestamp field and sets the zerolog.TimeFieldFormat format for the zerolog logger
+// WithFormattedTimestamp adds a formatted timestamp field to the logger's context
 func WithFormattedTimestamp(format string) Opt {
 	zerolog.TimeFieldFormat = format
 	return func(opts *Options) {
@@ -85,18 +90,21 @@ func WithFormattedTimestamp(format string) Opt {
 	}
 }
 
+// WithCaller adds a caller field to the logger's context
 func WithCaller() Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Caller()
 	}
 }
 
+// WithHook adds a hook to the logger's context
 func WithHook(hook zerolog.Hook) Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Logger().Hook(hook).With()
 	}
 }
 
+// WithHookFunc adds hook function to the logger's context
 func WithHookFunc(hook zerolog.HookFunc) Opt {
 	return func(opts *Options) {
 		opts.context = opts.context.Logger().Hook(hook).With()
