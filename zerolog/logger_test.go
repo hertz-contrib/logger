@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 CloudWeGo Authors
+ * Copyright 2022 CloudWeGo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,31 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * MIT License
- *
- * Copyright (c) 2019-present Fenny and Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.E SOFTWARE.
- *
- * This file may have been modified by CloudWeGo authors. All CloudWeGo
- * Modifications are Copyright 2022 CloudWeGo Authors.
  */
 
 package zerolog
@@ -47,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/cloudwego/hertz/pkg/common/json"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -66,6 +42,45 @@ func TestFrom(t *testing.T) {
 `,
 		b.String(),
 	)
+}
+
+func TestGetLogger(t *testing.T) {
+	hlog.SetLogger(New())
+	logger := GetLogger()
+
+	assert.IsType(t, &Logger{}, logger)
+}
+
+func TestWithContext(t *testing.T) {
+	ctx := context.Background()
+	l := New()
+	c := l.WithContext(ctx)
+
+	assert.NotNil(t, c)
+	assert.IsType(t, zerolog.Ctx(c), &zerolog.Logger{})
+}
+
+func TestLoggerWithField(t *testing.T) {
+	b := &bytes.Buffer{}
+	l := New()
+	l.SetOutput(b)
+	l.WithField("service", "logging")
+
+	l.Info("foobar")
+
+	type Log struct {
+		Level   string `json:"level"`
+		Service string `json:"service"`
+		Message string `json:"message"`
+	}
+
+	log := &Log{}
+
+	err := json.Unmarshal(b.Bytes(), log)
+
+	println(b.String())
+	assert.NoError(t, err)
+	assert.Equal(t, "logging", log.Service)
 }
 
 func TestUnwrap(t *testing.T) {
