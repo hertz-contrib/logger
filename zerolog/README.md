@@ -5,11 +5,15 @@ This is a logger library that uses zerolog to implement the [Hertz logger interf
 
 Download and install it:
 
-```go get github.com/hertz-contrib/logger/zerolog```
+```
+go get github.com/hertz-contrib/logger/zerolog
+```
 
 Import it in your code:
 
-```import hertzZerolog "github.com/hertz-contrib/logger/zerolog"```
+```
+import hertzZerolog "github.com/hertz-contrib/logger/zerolog"
+```
 
 Simple example:
 ```go
