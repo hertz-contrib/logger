@@ -97,7 +97,7 @@ func LoggerMiddleware() app.HandlerFunc {
         start := time.Now()
         
         reqId := ctx.Request.Header.Get(RequestIDHeaderValue)
-            if reqId == "" {
+        if reqId == "" {
             reqId = c.Value(RequestIDHeaderValue).(string)
         }
         
