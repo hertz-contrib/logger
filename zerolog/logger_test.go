@@ -46,8 +46,9 @@ func TestFrom(t *testing.T) {
 
 func TestGetLogger(t *testing.T) {
 	hlog.SetLogger(New())
-	logger := GetLogger()
+	logger, err := GetLogger()
 
+	assert.NoError(t, err)
 	assert.IsType(t, &Logger{}, logger)
 }
 
