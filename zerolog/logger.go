@@ -47,7 +47,7 @@ func From(log zerolog.Logger, options ...Opt) *Logger {
 	return newLogger(log, options)
 }
 
-// GetLogger returns the default logger instance
+// GetLogger returns the default logger instance or error if not of type zerolog.Logger
 func GetLogger() (*Logger, error) {
 	hlogLogger := hlog.DefaultLogger()
 
