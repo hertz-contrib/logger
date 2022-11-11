@@ -62,7 +62,7 @@ func main () {
 	
     hlog.SetLogger(hertzZerolog.New(
         hertzZerolog.WithOutput(os.Stdout), // allows to specify output
-        hertzZerolog.WithLevel(hlog.LevelWarn), // option with log level
+        hertzZerolog.WithLevel(hlog.LevelInfo), // option with log level
 	hertzZerolog.WithTimestamp(), // option with timestamp
 	hertzZerolog.WithCaller())) // option with caller
 
@@ -89,20 +89,21 @@ import (
 )
 
 // RequestIDHeaderValue value for the request id header
-const RequestIDHeaderValue = "X-Request-Id"
+const RequestIDHeaderValue = "X-Request-ID"
 
 // LoggerMiddleware middleware for logging incoming requests
 func LoggerMiddleware() app.HandlerFunc {
     return func(c context.Context, ctx *app.RequestContext) {
         start := time.Now()
-        
-        reqId := ctx.Request.Header.Get(RequestIDHeaderValue)
-        if reqId == "" {
-            reqId = c.Value(RequestIDHeaderValue).(string)
+
+        logger, err := hertzZerolog.GetLogger()
+        if err != nil {
+            hlog.Error(err)
+            ctx.Next(c)
+            return
         }
-        
-        logger := hertzZerolog.GetLogger()
-        
+
+        reqId := c.Value(RequestIDHeaderValue).(string)
         if reqId != "" {
             logger = logger.WithField("request_id", reqId)
         }

@@ -44,10 +44,19 @@ func TestFrom(t *testing.T) {
 	)
 }
 
+func TestGetLogger_hlogNotSet_shouldReturnError(t *testing.T) {
+	logger, err := GetLogger()
+
+	assert.Nil(t, logger)
+	assert.Error(t, err)
+	assert.Equal(t, "hlog.DefaultLogger is not a zerolog logger", err.Error())
+}
+
 func TestGetLogger(t *testing.T) {
 	hlog.SetLogger(New())
-	logger := GetLogger()
+	logger, err := GetLogger()
 
+	assert.NoError(t, err)
 	assert.IsType(t, &Logger{}, logger)
 }
 

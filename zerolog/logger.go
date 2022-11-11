@@ -18,6 +18,7 @@ package zerolog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -41,21 +42,20 @@ func New(options ...Opt) *Logger {
 	return newLogger(zerolog.New(os.Stdout), options)
 }
 
-// From returns a new Logger instance using existing zerolog log.
+// From returns a new Logger instance using an existing logger
 func From(log zerolog.Logger, options ...Opt) *Logger {
 	return newLogger(log, options)
 }
 
-// GetLogger returns the default logger instance
-func GetLogger() *Logger {
+// GetLogger returns the default logger instance or error if not of type zerolog.Logger
+func GetLogger() (*Logger, error) {
 	hlogLogger := hlog.DefaultLogger()
-	if hlogLogger != nil {
-		if logger, ok := hlogLogger.(*Logger); ok {
-			return logger
-		}
-	}
 
-	return nil
+	if logger, ok := hlogLogger.(*Logger); ok {
+		return logger, nil
+	} else {
+		return nil, errors.New("hlog.DefaultLogger is not a zerolog logger")
+	}
 }
 
 // SetLevel setting logging level for logger
