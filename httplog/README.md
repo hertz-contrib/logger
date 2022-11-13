@@ -6,7 +6,7 @@ If you switch to Hertz from gin and prefer gin's HTTP logging style, this middle
 
 ## Effect display photo
 
-![httplog_1](C:\Users\Friend\Desktop\httplog_1.png)
+![httplog_1](https://user-images.githubusercontent.com/78396698/201526334-c97bc174-d817-41d7-ab8f-1719690fdb8b.png)
 
 ## Usage
 
