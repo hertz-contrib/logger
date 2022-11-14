@@ -1,8 +1,9 @@
 package httplog
 
 import (
-	"bytes"
 	"context"
+
+	"bytes"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/common/test/assert"
@@ -22,11 +23,11 @@ func TestHttplogConsoleColor(t *testing.T) {
 		c.Response.SetConnectionClose()
 		c.JSON(201, map[string]string{"hi": user})
 	})
-	w := ut.PerformRequest(router, "GET", "/ping/EduFriendChen", &ut.Body{Body: bytes.NewBufferString("1"), Len: 1},
+	w := ut.PerformRequest(router, "GET", "/ping/httplog", &ut.Body{Body: bytes.NewBufferString("1"), Len: 1},
 		ut.Header{Key: "Connection", Value: "close"})
 	resp := w.Result()
 	assert.DeepEqual(t, 201, resp.StatusCode())
-	assert.DeepEqual(t, "{\"hi\":\"EduFriendChen\"}", string(resp.Body()))
+	assert.DeepEqual(t, "{\"hi\":\"httplog\"}", string(resp.Body()))
 }
 
 func TestHttplogDisableConsoleColor(t *testing.T) {
