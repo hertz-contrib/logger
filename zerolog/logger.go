@@ -47,15 +47,15 @@ func From(log zerolog.Logger, options ...Opt) *Logger {
 	return newLogger(log, options)
 }
 
-// GetLogger returns the default logger instance or error if not of type zerolog.Logger
-func GetLogger() (*Logger, error) {
-	hlogLogger := hlog.DefaultLogger()
+// GetLogger returns the default logger instance
+func GetLogger() (Logger, error) {
+	defaultLogger := hlog.DefaultLogger()
 
-	if logger, ok := hlogLogger.(*Logger); ok {
-		return logger, nil
-	} else {
-		return nil, errors.New("hlog.DefaultLogger is not a zerolog logger")
+	if logger, ok := defaultLogger.(*Logger); ok {
+		return *logger, nil
 	}
+
+	return Logger{}, errors.New("hlog.DefaultLogger is not a zerolog logger")
 }
 
 // SetLevel setting logging level for logger
@@ -77,14 +77,14 @@ func (l *Logger) WithContext(ctx context.Context) context.Context {
 }
 
 // WithField appends a field to the logger
-func (l *Logger) WithField(key string, value interface{}) *Logger {
+func (l *Logger) WithField(key string, value interface{}) Logger {
 	l.log = l.log.With().Interface(key, value).Logger()
-	return l
+	return *l
 }
 
 // Unwrap returns the underlying zerolog logger
-func (l *Logger) Unwrap() *zerolog.Logger {
-	return &l.log
+func (l *Logger) Unwrap() zerolog.Logger {
+	return l.log
 }
 
 // Log log using zerolog logger with specified level
