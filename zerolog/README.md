@@ -33,7 +33,7 @@ func main () {
     hlog.SetLogger(hertzZerolog.New())
 
     h.GET("/ping", func(ctx context.Context, c *app.RequestContext) {
-        hlog.Info("test log")
+        hlog.Warn("test log")
         c.JSON(consts.StatusOK, utils.H{"ping": "pong"})
     })
 	
@@ -102,7 +102,7 @@ func LoggerMiddleware() app.HandlerFunc {
             ctx.Next(c)
             return
         }
-
+        
         reqId := c.Value(RequestIDHeaderValue).(string)
         if reqId != "" {
             logger = logger.WithField("request_id", reqId)
@@ -112,8 +112,9 @@ func LoggerMiddleware() app.HandlerFunc {
         
         defer func() {
             stop := time.Now()
-            
-            logger.Unwrap().Info().
+
+            logUnwrap := logger.Unwrap()
+            logUnwrap.Info().
                 Str("remote_ip", ctx.ClientIP()).
                 Str("method", string(ctx.Method())).
                 Str("path", string(ctx.Path())).
