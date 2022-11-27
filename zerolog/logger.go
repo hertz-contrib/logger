@@ -37,6 +37,10 @@ type Logger struct {
 	options []Opt
 }
 
+// ConsoleWriter parses the JSON input and writes it in an
+// (optionally) colorized, human-friendly format to Out.
+type ConsoleWriter = zerolog.ConsoleWriter
+
 // New returns a new Logger instance
 func New(options ...Opt) *Logger {
 	return newLogger(zerolog.New(os.Stdout), options)
