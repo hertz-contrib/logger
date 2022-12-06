@@ -115,7 +115,10 @@ var Tags = map[string]logTagFunc{
 		return buf.Write(c.Request.Body())
 	},
 	TagBytesSent: func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
-		return appendInt(buf, c.Response.Header.ContentLength())
+		if c.Response.Header.ContentLength() < 0 {
+			return appendInt(buf, 0)
+		}
+		return appendInt(buf, len(c.Response.Body()))
 	},
 	TagBytesReceived: func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
 		return appendInt(buf, len(c.Request.Body()))
