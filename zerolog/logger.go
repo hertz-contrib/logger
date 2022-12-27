@@ -41,6 +41,11 @@ type Logger struct {
 // (optionally) colorized, human-friendly format to Out.
 type ConsoleWriter = zerolog.ConsoleWriter
 
+// MultiLevelWriter may be used to send the log message to multiple outputs.
+func MultiLevelWriter(writers ...io.Writer) zerolog.LevelWriter {
+	return zerolog.MultiLevelWriter(writers...)
+}
+
 // New returns a new Logger instance
 func New(options ...Opt) *Logger {
 	return newLogger(zerolog.New(os.Stdout), options)
