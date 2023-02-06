@@ -31,19 +31,19 @@ func (fn option) apply(cfg *config) {
 	fn(cfg)
 }
 
-type coreConfig struct {
-	enc zapcore.Encoder
-	ws  zapcore.WriteSyncer
-	lvl zap.AtomicLevel
+type CoreConfig struct {
+	Enc zapcore.Encoder
+	Ws  zapcore.WriteSyncer
+	Lvl zap.AtomicLevel
 }
 
 type config struct {
-	coreConfig coreConfig
-	zapOpts    []zap.Option
+	coreConfigs []CoreConfig
+	zapOpts     []zap.Option
 }
 
 // defaultCoreConfig default zapcore config: json encoder, atomic level, stdout write syncer
-func defaultCoreConfig() *coreConfig {
+func defaultCoreConfig() *CoreConfig {
 	// default log encoder
 	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
 	// default log level
@@ -51,40 +51,46 @@ func defaultCoreConfig() *coreConfig {
 	// default write syncer stdout
 	ws := zapcore.AddSync(os.Stdout)
 
-	return &coreConfig{
-		enc: enc,
-		ws:  ws,
-		lvl: lvl,
+	return &CoreConfig{
+		Enc: enc,
+		Ws:  ws,
+		Lvl: lvl,
 	}
 }
 
 // defaultConfig default config
 func defaultConfig() *config {
-	coreConfig := defaultCoreConfig()
 	return &config{
-		coreConfig: *coreConfig,
-		zapOpts:    []zap.Option{},
+		coreConfigs: []CoreConfig{*defaultCoreConfig()},
+		zapOpts:     []zap.Option{},
 	}
 }
 
 // WithCoreEnc zapcore encoder
 func WithCoreEnc(enc zapcore.Encoder) Option {
 	return option(func(cfg *config) {
-		cfg.coreConfig.enc = enc
+		cfg.coreConfigs[0].Enc = enc
 	})
 }
 
 // WithCoreWs zapcore write syncer
 func WithCoreWs(ws zapcore.WriteSyncer) Option {
 	return option(func(cfg *config) {
-		cfg.coreConfig.ws = ws
+		cfg.coreConfigs[0].Ws = ws
 	})
 }
 
 // WithCoreLevel zapcore log level
 func WithCoreLevel(lvl zap.AtomicLevel) Option {
 	return option(func(cfg *config) {
-		cfg.coreConfig.lvl = lvl
+		cfg.coreConfigs[0].Lvl = lvl
+	})
+}
+
+// WithCores zapcore
+func WithCores(coreConfigs ...CoreConfig) Option {
+	return option(func(cfg *config) {
+		cfg.coreConfigs = coreConfigs
 	})
 }
 
