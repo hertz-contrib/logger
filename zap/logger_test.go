@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -53,6 +55,17 @@ func humanEncoderConfig() zapcore.EncoderConfig {
 	cfg.EncodeLevel = zapcore.CapitalLevelEncoder
 	cfg.EncodeDuration = zapcore.StringDurationEncoder
 	return cfg
+}
+
+func getWriteSyncer(file string) zapcore.WriteSyncer {
+	_, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		_ = os.MkdirAll(filepath.Dir(file), 0o744)
+	}
+
+	f, _ := os.OpenFile(file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+
+	return zapcore.AddSync(f)
 }
 
 // TestLogger test logger work with hertz
@@ -175,14 +188,98 @@ func TestLogLevel(t *testing.T) {
 	assert.True(t, strings.Contains(buf.String(), "this is a debug log"))
 }
 
+func TestWithCoreEnc(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	logger := NewLogger(WithCoreEnc(zapcore.NewConsoleEncoder(humanEncoderConfig())))
+	defer logger.Sync()
+
+	// output to buffer
+	logger.SetOutput(buf)
+
+	logger.Infof("this is a info log %s", "msg")
+	assert.True(t, strings.Contains(buf.String(), "this is a info log"))
+}
+
+func TestWithCoreWs(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	logger := NewLogger(WithCoreWs(zapcore.AddSync(buf)))
+	defer logger.Sync()
+
+	logger.Infof("this is a info log %s", "msg")
+	assert.True(t, strings.Contains(buf.String(), "this is a info log"))
+}
+
+func TestWithCoreLevel(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	logger := NewLogger(WithCoreLevel(zap.NewAtomicLevelAt(zapcore.WarnLevel)))
+	defer logger.Sync()
+
+	// output to buffer
+	logger.SetOutput(buf)
+
+	logger.Infof("this is a info log %s", "msg")
+	assert.False(t, strings.Contains(buf.String(), "this is a info log"))
+
+	logger.Warnf("this is a warn log %s", "msg")
+	assert.True(t, strings.Contains(buf.String(), "this is a warn log"))
+}
+
 // TestCoreOption test zapcore config option
 func TestCoreOption(t *testing.T) {
 	buf := new(bytes.Buffer)
 
+	dynamicLevel := zap.NewAtomicLevel()
+
+	dynamicLevel.SetLevel(zap.InfoLevel)
+
 	logger := NewLogger(
-		WithCoreEnc(zapcore.NewConsoleEncoder(humanEncoderConfig())),
-		WithCoreLevel(zap.NewAtomicLevelAt(zapcore.WarnLevel)),
-		WithCoreWs(zapcore.AddSync(buf)),
+		WithCores([]CoreConfig{
+			{
+				Enc: zapcore.NewConsoleEncoder(humanEncoderConfig()),
+				Ws:  zapcore.AddSync(os.Stdout),
+				Lvl: dynamicLevel,
+			},
+			{
+				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
+				Ws:  getWriteSyncer("./all/log.log"),
+				Lvl: zap.NewAtomicLevelAt(zapcore.DebugLevel),
+			},
+			{
+				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
+				Ws:  getWriteSyncer("./debug/log.log"),
+				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
+					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+						return lev == zap.DebugLevel
+					}))),
+			},
+			{
+				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
+				Ws:  getWriteSyncer("./info/log.log"),
+				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
+					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+						return lev == zap.InfoLevel
+					}))),
+			},
+			{
+				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
+				Ws:  getWriteSyncer("./warn/log.log"),
+				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
+					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+						return lev == zap.WarnLevel
+					}))),
+			},
+			{
+				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
+				Ws:  getWriteSyncer("./error/log.log"),
+				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
+					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+						return lev >= zap.ErrorLevel
+					}))),
+			},
+		}...),
 	)
 	defer logger.Sync()
 
@@ -197,6 +294,10 @@ func TestCoreOption(t *testing.T) {
 	assert.True(t, strings.Contains(buf.String(), "this is a warn log"))
 	// test console encoder result
 	assert.True(t, strings.Contains(buf.String(), "\tERROR\t"))
+
+	logger.SetLevel(hlog.LevelDebug)
+	logger.Debug("this is a debug log")
+	assert.True(t, strings.Contains(buf.String(), "this is a debug log"))
 }
 
 // TestCoreOption test zapcore config option

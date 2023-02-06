@@ -38,8 +38,13 @@ func NewLogger(opts ...Option) *Logger {
 		opt.apply(config)
 	}
 
+	cores := make([]zapcore.Core, 0, len(config.coreConfigs))
+	for _, coreConfig := range config.coreConfigs {
+		cores = append(cores, zapcore.NewCore(coreConfig.Enc, coreConfig.Ws, coreConfig.Lvl))
+	}
+
 	logger := zap.New(
-		zapcore.NewCore(config.coreConfig.enc, config.coreConfig.ws, config.coreConfig.lvl),
+		zapcore.NewTee(cores[:]...),
 		config.zapOpts...)
 
 	return &Logger{
@@ -200,17 +205,34 @@ func (l *Logger) SetLevel(level hlog.Level) {
 	default:
 		lvl = zap.WarnLevel
 	}
-	l.config.coreConfig.lvl.SetLevel(lvl)
+
+	l.config.coreConfigs[0].Lvl.SetLevel(lvl)
+
+	cores := make([]zapcore.Core, 0, len(l.config.coreConfigs))
+	for _, coreConfig := range l.config.coreConfigs {
+		cores = append(cores, zapcore.NewCore(coreConfig.Enc, coreConfig.Ws, coreConfig.Lvl))
+	}
+
+	logger := zap.New(
+		zapcore.NewTee(cores[:]...),
+		l.config.zapOpts...)
+
+	l.l = logger.Sugar()
 }
 
 func (l *Logger) SetOutput(writer io.Writer) {
-	ws := zapcore.AddSync(writer)
-	log := zap.New(
-		zapcore.NewCore(l.config.coreConfig.enc, ws, l.config.coreConfig.lvl),
-		l.config.zapOpts...,
-	).Sugar()
-	l.config.coreConfig.ws = ws
-	l.l = log
+	l.config.coreConfigs[0].Ws = zapcore.AddSync(writer)
+
+	cores := make([]zapcore.Core, 0, len(l.config.coreConfigs))
+	for _, coreConfig := range l.config.coreConfigs {
+		cores = append(cores, zapcore.NewCore(coreConfig.Enc, coreConfig.Ws, coreConfig.Lvl))
+	}
+
+	logger := zap.New(
+		zapcore.NewTee(cores[:]...),
+		l.config.zapOpts...)
+
+	l.l = logger.Sugar()
 }
 
 func (l *Logger) Sync() {
