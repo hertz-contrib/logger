@@ -59,6 +59,14 @@ import (
 var defaultFormat = " %s | %3d | %7v | %-7s | %-s "
 
 func New(opts ...Option) app.HandlerFunc {
+	return new(context.Background(), opts...)
+}
+
+func NewWithContext(ctx context.Context, opts ...Option) app.HandlerFunc {
+	return new(ctx, opts...)
+}
+
+func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 	cfg := newOptions(opts...)
 	// Check if format contains latency
 	cfg.enableLatency = strings.Contains(cfg.format, "${latency}")
@@ -72,7 +80,11 @@ func New(opts ...Option) app.HandlerFunc {
 	if strings.Contains(cfg.format, "${time}") {
 		go func() {
 			for {
-				time.Sleep(cfg.timeInterval)
+				select {
+				case <-time.After(cfg.timeInterval):
+				case <-ctx.Done():
+					return
+				}
 				timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
 			}
 		}()
