@@ -60,6 +60,7 @@ const (
 	TagIP                = "ip"
 	TagIPs               = "ips"
 	TagHost              = "host"
+	TagClientIP          = "clientIP"
 	TagMethod            = "method"
 	TagPath              = "path"
 	TagURL               = "url"
@@ -101,6 +102,9 @@ var Tags = map[string]logTagFunc{
 	},
 	TagHost: func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
 		return buf.WriteString(string(c.Request.URI().Host()))
+	},
+	TagClientIP: func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
+		return buf.WriteString(c.ClientIP())
 	},
 	TagPath: func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
 		return buf.WriteString(string(c.Request.Path()))
