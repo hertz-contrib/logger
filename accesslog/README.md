@@ -156,7 +156,7 @@ package main
 
 import (
 	"context"
-	
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
@@ -200,6 +200,7 @@ const (
 	TagPort              = "port"
 	TagIP                = "ip"
 	TagIPs               = "ips"
+	TagClientIP          = "clientIP"
 	TagHost              = "host"
 	TagMethod            = "method"
 	TagPath              = "path"
