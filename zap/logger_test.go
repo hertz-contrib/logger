@@ -17,6 +17,7 @@ package zap
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -317,4 +318,47 @@ func TestZapOption(t *testing.T) {
 	logger.Error("this is a warn log")
 	// test caller in log result
 	assert.True(t, strings.Contains(buf.String(), "caller"))
+}
+
+// TestWithExtraKeys test WithExtraKeys option
+func TestWithExtraKeys(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	log := NewLogger(WithExtraKeys([]ExtraKey{"requestId"}))
+	log.SetOutput(buf)
+
+	ctx := context.WithValue(context.Background(), ExtraKey("requestId"), "123")
+
+	log.CtxInfof(ctx, "%s log", "extra")
+
+	var logStructMap map[string]interface{}
+
+	err := json.Unmarshal(buf.Bytes(), &logStructMap)
+
+	assert.Nil(t, err)
+
+	value, ok := logStructMap["requestId"]
+
+	assert.True(t, ok)
+	assert.Equal(t, value, "123")
+}
+
+func BenchmarkNormal(b *testing.B) {
+	buf := new(bytes.Buffer)
+	log := NewLogger()
+	log.SetOutput(buf)
+	ctx := context.Background()
+	for i := 0; i < b.N; i++ {
+		log.CtxInfof(ctx, "normal log")
+	}
+}
+
+func BenchmarkWithExtraKeys(b *testing.B) {
+	buf := new(bytes.Buffer)
+	log := NewLogger(WithExtraKeys([]ExtraKey{"requestId"}))
+	log.SetOutput(buf)
+	ctx := context.WithValue(context.Background(), ExtraKey("requestId"), "123")
+	for i := 0; i < b.N; i++ {
+		log.CtxInfof(ctx, "normal log")
+	}
 }
