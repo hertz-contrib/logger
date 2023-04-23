@@ -36,7 +36,7 @@ func (fn option) apply(cfg *config) {
 type CoreConfig struct {
 	Enc zapcore.Encoder
 	Ws  zapcore.WriteSyncer
-	Lvl zap.AtomicLevel
+	Lvl zapcore.LevelEnabler
 }
 
 type config struct {
