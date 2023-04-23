@@ -57,11 +57,11 @@ func main() {
 
 	dynamicLevel.SetLevel(zap.DebugLevel)
 
-	logger := hertzzap.NewLogger(
-		hertzzap.WithCores([]hertzzap.CoreConfig{
+	logger := NewLogger(
+		WithCores([]CoreConfig{
 			{
 				Enc: zapcore.NewConsoleEncoder(humanEncoderConfig()),
-				Ws:  os.Stdout,
+				Ws:  zapcore.AddSync(os.Stdout),
 				Lvl: dynamicLevel,
 			},
 			{
@@ -72,34 +72,30 @@ func main() {
 			{
 				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
 				Ws:  getWriteSyncer("./debug/log.log"),
-				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
-					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
-						return lev == zap.DebugLevel
-					}))),
+				Lvl: zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+					return lev == zap.DebugLevel
+				}),
 			},
 			{
 				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
 				Ws:  getWriteSyncer("./info/log.log"),
-				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
-					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
-						return lev == zap.InfoLevel
-					}))),
+				Lvl: zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+					return lev == zap.InfoLevel
+				}),
 			},
 			{
 				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
 				Ws:  getWriteSyncer("./warn/log.log"),
-				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
-					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
-						return lev == zap.WarnLevel
-					}))),
+				Lvl: zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+					return lev == zap.WarnLevel
+				}),
 			},
 			{
 				Enc: zapcore.NewJSONEncoder(humanEncoderConfig()),
 				Ws:  getWriteSyncer("./error/log.log"),
-				Lvl: zap.NewAtomicLevelAt(zapcore.LevelOf(
-					zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
-						return lev >= zap.ErrorLevel
-					}))),
+				Lvl: zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
+					return lev >= zap.ErrorLevel
+				}),
 			},
 		}...),
 	)
