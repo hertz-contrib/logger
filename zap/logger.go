@@ -206,7 +206,7 @@ func (l *Logger) SetLevel(level hlog.Level) {
 		lvl = zap.WarnLevel
 	}
 
-	l.config.coreConfigs[0].Lvl.SetLevel(lvl)
+	l.config.coreConfigs[0].Lvl = lvl
 
 	cores := make([]zapcore.Core, 0, len(l.config.coreConfigs))
 	for _, coreConfig := range l.config.coreConfigs {
