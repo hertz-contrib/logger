@@ -89,19 +89,25 @@ func (l *Logger) Logf(level hlog.Level, format string, kvs ...interface{}) {
 }
 
 func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, kvs ...interface{}) {
+	log := l.l
+	if len(l.config.extraKeys) > 0 {
+		for _, k := range l.config.extraKeys {
+			log = log.With(string(k), ctx.Value(k))
+		}
+	}
 	switch level {
 	case hlog.LevelDebug, hlog.LevelTrace:
-		l.l.Debugf(format, kvs...)
+		log.Debugf(format, kvs...)
 	case hlog.LevelInfo:
-		l.l.Infof(format, kvs...)
+		log.Infof(format, kvs...)
 	case hlog.LevelNotice, hlog.LevelWarn:
-		l.l.Warnf(format, kvs...)
+		log.Warnf(format, kvs...)
 	case hlog.LevelError:
-		l.l.Errorf(format, kvs...)
+		log.Errorf(format, kvs...)
 	case hlog.LevelFatal:
-		l.l.Fatalf(format, kvs...)
+		log.Fatalf(format, kvs...)
 	default:
-		l.l.Warnf(format, kvs...)
+		log.Warnf(format, kvs...)
 	}
 }
 

@@ -25,6 +25,8 @@ type Option interface {
 	apply(cfg *config)
 }
 
+type ExtraKey string
+
 type option func(cfg *config)
 
 func (fn option) apply(cfg *config) {
@@ -38,6 +40,7 @@ type CoreConfig struct {
 }
 
 type config struct {
+	extraKeys   []ExtraKey
 	coreConfigs []CoreConfig
 	zapOpts     []zap.Option
 }
@@ -98,5 +101,16 @@ func WithCores(coreConfigs ...CoreConfig) Option {
 func WithZapOptions(opts ...zap.Option) Option {
 	return option(func(cfg *config) {
 		cfg.zapOpts = append(cfg.zapOpts, opts...)
+	})
+}
+
+// WithExtraKeys allow you log extra values from context
+func WithExtraKeys(keys []ExtraKey) Option {
+	return option(func(cfg *config) {
+		for _, k := range keys {
+			if !inArray(k, cfg.extraKeys) {
+				cfg.extraKeys = append(cfg.extraKeys, k)
+			}
+		}
 	})
 }
