@@ -132,10 +132,10 @@ func (l *Logger) Logf(level hlog.Level, format string, kvs ...interface{}) {
 	}
 }
 
-// CtxLogf log with logger associated with context.
-// If no logger is associated, DefaultContextLogger is used, unless DefaultContextLogger is nil, in which case a disabled logger is used.
+// CtxLogf associate logger with context and log.
 func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, kvs ...interface{}) {
-	logger := zerolog.Ctx(ctx)
+	logger := l.Unwrap()
+	logger.WithContext(ctx)
 	switch level {
 	case hlog.LevelTrace, hlog.LevelDebug:
 		logger.Debug().Msg(fmt.Sprintf(format, kvs...))
