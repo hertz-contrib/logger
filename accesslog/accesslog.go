@@ -75,6 +75,7 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 
 	// Create correct time format
 	var timestamp atomic.Value
+	timestamp.Store(time.Now().In(cfg.timeZoneLocation).Format(cfg.timeFormat))
 
 	// Update date/time every 500 milliseconds in a separate go routine
 	if strings.Contains(cfg.format, "${time}") {
