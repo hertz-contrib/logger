@@ -242,8 +242,8 @@ func (l *Logger) SetOutput(writer io.Writer) {
 	l.l = logger
 }
 
-// GetLogger is used to return an instance of *zap.Logger for custom fields, etc.
-func (l *Logger) GetLogger() *zap.Logger {
+// Logger is used to return an instance of *zap.Logger for custom fields, etc.
+func (l *Logger) Logger() *zap.Logger {
 	return l.l
 }
 
