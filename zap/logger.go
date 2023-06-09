@@ -26,7 +26,7 @@ import (
 var _ hlog.FullLogger = (*Logger)(nil)
 
 type Logger struct {
-	l      *zap.SugaredLogger
+	l      *zap.Logger
 	config *config
 }
 
@@ -48,30 +48,31 @@ func NewLogger(opts ...Option) *Logger {
 		config.zapOpts...)
 
 	return &Logger{
-		l:      logger.Sugar(),
+		l:      logger,
 		config: config,
 	}
 }
 
 func (l *Logger) Log(level hlog.Level, kvs ...interface{}) {
+	sugar := l.l.Sugar()
 	switch level {
 	case hlog.LevelTrace, hlog.LevelDebug:
-		l.l.Debug(kvs...)
+		sugar.Debug(kvs...)
 	case hlog.LevelInfo:
-		l.l.Info(kvs...)
+		sugar.Info(kvs...)
 	case hlog.LevelNotice, hlog.LevelWarn:
-		l.l.Warn(kvs...)
+		sugar.Warn(kvs...)
 	case hlog.LevelError:
-		l.l.Error(kvs...)
+		sugar.Error(kvs...)
 	case hlog.LevelFatal:
-		l.l.Fatal(kvs...)
+		sugar.Fatal(kvs...)
 	default:
-		l.l.Warn(kvs...)
+		sugar.Warn(kvs...)
 	}
 }
 
 func (l *Logger) Logf(level hlog.Level, format string, kvs ...interface{}) {
-	logger := l.l.With()
+	logger := l.l.Sugar().With()
 	switch level {
 	case hlog.LevelTrace, hlog.LevelDebug:
 		logger.Debugf(format, kvs...)
@@ -89,7 +90,7 @@ func (l *Logger) Logf(level hlog.Level, format string, kvs ...interface{}) {
 }
 
 func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, kvs ...interface{}) {
-	log := l.l
+	log := l.l.Sugar()
 	if len(l.config.extraKeys) > 0 {
 		for _, k := range l.config.extraKeys {
 			log = log.With(string(k), ctx.Value(k))
@@ -223,7 +224,7 @@ func (l *Logger) SetLevel(level hlog.Level) {
 		zapcore.NewTee(cores[:]...),
 		l.config.zapOpts...)
 
-	l.l = logger.Sugar()
+	l.l = logger
 }
 
 func (l *Logger) SetOutput(writer io.Writer) {
@@ -238,7 +239,12 @@ func (l *Logger) SetOutput(writer io.Writer) {
 		zapcore.NewTee(cores[:]...),
 		l.config.zapOpts...)
 
-	l.l = logger.Sugar()
+	l.l = logger
+}
+
+// GetLogger is used to return an instance of *zap.Logger for custom fields, etc.
+func (l *Logger) GetLogger() *zap.Logger {
+	return l.l
 }
 
 func (l *Logger) Sync() {
