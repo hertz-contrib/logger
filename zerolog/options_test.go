@@ -68,6 +68,31 @@ func TestWithCaller(t *testing.T) {
 	assert.Equal(t, filePath, "logger.go")
 }
 
+func TestWithCallerSkipFrameCount(t *testing.T) {
+	b := &bytes.Buffer{}
+	l := New(WithCallerSkipFrameCount(5))
+	l.SetOutput(b)
+	hlog.SetLogger(l)
+	hlog.Info("foobar")
+
+	type Log struct {
+		Level   string `json:"level"`
+		Caller  string `json:"caller"`
+		Message string `json:"message"`
+	}
+
+	log := &Log{}
+
+	err := json.Unmarshal(b.Bytes(), log)
+
+	assert.NoError(t, err)
+
+	segments := strings.Split(log.Caller, ":")
+	filePath := filepath.Base(segments[0])
+
+	assert.Equal(t, filePath, "options_test.go")
+}
+
 func TestWithField(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New(WithField("service", "logging"))

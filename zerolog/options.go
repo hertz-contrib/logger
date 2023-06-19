@@ -97,6 +97,15 @@ func WithCaller() Opt {
 	}
 }
 
+// WithCallerSkipFrameCount adds a caller field to the logger's context
+// The specified skipFrameCount int will override the global CallerSkipFrameCount for this context's respective logger.
+// If set to -1 the global CallerSkipFrameCount will be used.
+func WithCallerSkipFrameCount(skipFrameCount int) Opt {
+	return func(opts *Options) {
+		opts.context = opts.context.CallerWithSkipFrameCount(skipFrameCount)
+	}
+}
+
 // WithHook adds a hook to the logger's context
 func WithHook(hook zerolog.Hook) Opt {
 	return func(opts *Options) {
