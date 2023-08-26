@@ -349,6 +349,16 @@ func TestWithExtraKeys(t *testing.T) {
 	assert.Equal(t, value, "123")
 }
 
+func TestPutExtraKeys(t *testing.T) {
+	logger := NewLogger(WithExtraKeys([]ExtraKey{"abc"}))
+
+	assert.Contains(t, logger.GetExtraKeys(), ExtraKey("abc"))
+	assert.NotContains(t, logger.GetExtraKeys(), ExtraKey("def"))
+
+	logger.PutExtraKeys("def")
+	assert.Contains(t, logger.GetExtraKeys(), ExtraKey("def"))
+}
+
 func BenchmarkNormal(b *testing.B) {
 	buf := new(bytes.Buffer)
 	log := NewLogger()
