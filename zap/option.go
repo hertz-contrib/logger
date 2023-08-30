@@ -108,7 +108,7 @@ func WithZapOptions(opts ...zap.Option) Option {
 func WithExtraKeys(keys []ExtraKey) Option {
 	return option(func(cfg *config) {
 		for _, k := range keys {
-			if !inArray(k, cfg.extraKeys) {
+			if !InArray(k, cfg.extraKeys) {
 				cfg.extraKeys = append(cfg.extraKeys, k)
 			}
 		}

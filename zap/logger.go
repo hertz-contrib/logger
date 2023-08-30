@@ -53,6 +53,20 @@ func NewLogger(opts ...Option) *Logger {
 	}
 }
 
+// GetExtraKeys get extraKeys from logger config
+func (l *Logger) GetExtraKeys() []ExtraKey {
+	return l.config.extraKeys
+}
+
+// PutExtraKeys add extraKeys after init
+func (l *Logger) PutExtraKeys(keys ...ExtraKey) {
+	for _, k := range keys {
+		if !InArray(k, l.config.extraKeys) {
+			l.config.extraKeys = append(l.config.extraKeys, k)
+		}
+	}
+}
+
 func (l *Logger) Log(level hlog.Level, kvs ...interface{}) {
 	sugar := l.l.Sugar()
 	switch level {

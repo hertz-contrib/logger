@@ -23,6 +23,6 @@ import (
 func TestInArray(t *testing.T) {
 	key1 := ExtraKey("key1")
 	key2 := ExtraKey("key2")
-	assert.True(t, inArray(key1, []ExtraKey{key1}))
-	assert.False(t, inArray(key2, []ExtraKey{key1}))
+	assert.True(t, InArray(key1, []ExtraKey{key1}))
+	assert.False(t, InArray(key2, []ExtraKey{key1}))
 }
