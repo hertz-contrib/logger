@@ -139,17 +139,17 @@ func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, k
 	// todo add hook
 	switch level {
 	case hlog.LevelTrace, hlog.LevelDebug:
-		logger.Debug().Msg(fmt.Sprintf(format, kvs...))
+		logger.Debug().Ctx(ctx).Msg(fmt.Sprintf(format, kvs...))
 	case hlog.LevelInfo:
-		logger.Info().Msg(fmt.Sprintf(format, kvs...))
+		logger.Info().Ctx(ctx).Msg(fmt.Sprintf(format, kvs...))
 	case hlog.LevelNotice, hlog.LevelWarn:
-		logger.Warn().Msg(fmt.Sprintf(format, kvs...))
+		logger.Warn().Ctx(ctx).Msg(fmt.Sprintf(format, kvs...))
 	case hlog.LevelError:
-		logger.Error().Msg(fmt.Sprintf(format, kvs...))
+		logger.Error().Ctx(ctx).Msg(fmt.Sprintf(format, kvs...))
 	case hlog.LevelFatal:
-		logger.Fatal().Msg(fmt.Sprintf(format, kvs...))
+		logger.Fatal().Ctx(ctx).Msg(fmt.Sprintf(format, kvs...))
 	default:
-		logger.Warn().Msg(fmt.Sprintf(format, kvs...))
+		logger.Warn().Ctx(ctx).Msg(fmt.Sprintf(format, kvs...))
 	}
 }
 
