@@ -107,7 +107,11 @@ func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, k
 	log := l.l.Sugar()
 	if len(l.config.extraKeys) > 0 {
 		for _, k := range l.config.extraKeys {
-			log = log.With(string(k), ctx.Value(k))
+			if l.config.extraKeyAsStr {
+				log = log.With(string(k), ctx.Value(string(k)))
+			} else {
+				log = log.With(string(k), ctx.Value(k))
+			}
 		}
 	}
 	switch level {

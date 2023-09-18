@@ -40,9 +40,10 @@ type CoreConfig struct {
 }
 
 type config struct {
-	extraKeys   []ExtraKey
-	coreConfigs []CoreConfig
-	zapOpts     []zap.Option
+	extraKeys     []ExtraKey
+	coreConfigs   []CoreConfig
+	zapOpts       []zap.Option
+	extraKeyAsStr bool
 }
 
 // defaultCoreConfig default zapcore config: json encoder, atomic level, stdout write syncer
@@ -64,8 +65,9 @@ func defaultCoreConfig() *CoreConfig {
 // defaultConfig default config
 func defaultConfig() *config {
 	return &config{
-		coreConfigs: []CoreConfig{*defaultCoreConfig()},
-		zapOpts:     []zap.Option{},
+		coreConfigs:   []CoreConfig{*defaultCoreConfig()},
+		zapOpts:       []zap.Option{},
+		extraKeyAsStr: false,
 	}
 }
 
@@ -112,5 +114,16 @@ func WithExtraKeys(keys []ExtraKey) Option {
 				cfg.extraKeys = append(cfg.extraKeys, k)
 			}
 		}
+	})
+}
+
+// WithExtraKeyAsStr convert extraKey to a string type when retrieving value from context
+// Not recommended for use, only for compatibility with certain situations
+//
+// For more information, refer to the documentation at
+// `https://pkg.go.dev/context#WithValue`
+func WithExtraKeyAsStr() Option {
+	return option(func(cfg *config) {
+		cfg.extraKeyAsStr = true
 	})
 }
