@@ -359,6 +359,36 @@ func TestPutExtraKeys(t *testing.T) {
 	assert.Contains(t, logger.GetExtraKeys(), ExtraKey("def"))
 }
 
+func TestExtraKeyAsStr(t *testing.T) {
+	buf := new(bytes.Buffer)
+	const v = "value"
+
+	logger := NewLogger(WithExtraKeys([]ExtraKey{"abc"}))
+
+	logger.SetOutput(buf)
+
+	ctx1 := context.TODO()
+	ctx1 = context.WithValue(ctx1, "key1", v) //nolint:staticcheck
+	logger.CtxErrorf(ctx1, "%s", "error")
+
+	assert.NotContains(t, buf.String(), v)
+
+	buf.Reset()
+
+	strLogger := NewLogger(WithExtraKeys([]ExtraKey{"abc"}), WithExtraKeyAsStr())
+
+	strLogger.SetOutput(buf)
+
+	ctx2 := context.TODO()
+	ctx2 = context.WithValue(ctx2, "key2", v) //nolint:staticcheck
+
+	strLogger.CtxErrorf(ctx2, "key2", v)
+
+	assert.Contains(t, buf.String(), v)
+
+	buf.Reset()
+}
+
 func BenchmarkNormal(b *testing.B) {
 	buf := new(bytes.Buffer)
 	log := NewLogger()
