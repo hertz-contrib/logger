@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 )
@@ -45,7 +44,7 @@ func NewLogger(opts ...Option) *Logger {
 	}
 
 	return &Logger{
-		l:   slog.New(slog.NewJSONHandler(os.Stdout, config.handlerOptions)),
+		l:   slog.New(slog.NewJSONHandler(config.output, config.handlerOptions)),
 		cfg: config,
 	}
 }
