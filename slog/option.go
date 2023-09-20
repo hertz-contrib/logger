@@ -15,7 +15,9 @@
 package slog
 
 import (
+	"io"
 	"log/slog"
+	"os"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 )
@@ -31,9 +33,11 @@ func (fn option) apply(cfg *config) {
 }
 
 type config struct {
-	level          *slog.LevelVar
-	handlerOptions *slog.HandlerOptions
-	withLevel      bool
+	level              *slog.LevelVar
+	withLevel          bool
+	handlerOptions     *slog.HandlerOptions
+	withHandlerOptions bool
+	output             io.Writer
 }
 
 func defaultConfig() *config {
@@ -44,8 +48,11 @@ func defaultConfig() *config {
 		Level: lvl,
 	}
 	return &config{
-		level:          lvl,
-		handlerOptions: handlerOptions,
+		level:              lvl,
+		withLevel:          false,
+		handlerOptions:     handlerOptions,
+		withHandlerOptions: false,
+		output:             os.Stdout,
 	}
 }
 
@@ -59,5 +66,12 @@ func WithLevel(lvl *slog.LevelVar) Option {
 func WithHandlerOptions(opts *slog.HandlerOptions) Option {
 	return option(func(cfg *config) {
 		cfg.handlerOptions = opts
+		cfg.withHandlerOptions = true
+	})
+}
+
+func WithOutput(writer io.Writer) Option {
+	return option(func(cfg *config) {
+		cfg.output = writer
 	})
 }

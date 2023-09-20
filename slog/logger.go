@@ -20,7 +20,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"reflect"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 )
@@ -38,10 +37,11 @@ func NewLogger(opts ...Option) *Logger {
 		config.handlerOptions.Level = config.level
 	}
 
-	if reflect.TypeOf(config.handlerOptions.Level) != reflect.TypeOf(&slog.LevelVar{}) {
+	if config.withHandlerOptions {
 		lvl := &slog.LevelVar{}
 		lvl.Set(config.handlerOptions.Level.Level())
 		config.handlerOptions.Level = lvl
+		config.level = lvl
 	}
 
 	return &Logger{
@@ -160,9 +160,11 @@ func (l *Logger) CtxFatalf(ctx context.Context, format string, v ...any) {
 }
 
 func (l *Logger) SetLevel(level hlog.Level) {
-	l.cfg.level.Set(hLevelToSLevel(level))
+	lvl := hLevelToSLevel(level)
+	l.cfg.level.Set(lvl)
 }
 
 func (l *Logger) SetOutput(writer io.Writer) {
+	l.cfg.output = writer
 	l.l = slog.New(slog.NewJSONHandler(writer, l.cfg.handlerOptions))
 }

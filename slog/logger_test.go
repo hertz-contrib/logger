@@ -116,5 +116,5 @@ func TestWithHandlerOptions(t *testing.T) {
 	assert.Equal(t, "", buf.String())
 
 	hlog.Info(infoMsg)
-	assert.Contains(t, infoMsg, buf.String())
+	assert.Contains(t, buf.String(), infoMsg)
 }
