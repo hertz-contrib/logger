@@ -23,6 +23,12 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 )
 
+const (
+	LevelTrace  = slog.Level(-8)
+	LevelNotice = slog.Level(2)
+	LevelFatal  = slog.Level(12)
+)
+
 var _ hlog.FullLogger = (*Logger)(nil)
 
 func NewLogger(opts ...Option) *Logger {
@@ -32,16 +38,52 @@ func NewLogger(opts ...Option) *Logger {
 	for _, opt := range opts {
 		opt.apply(config)
 	}
-	if config.withLevel {
-		config.handlerOptions.Level = config.level
-	}
 
-	if config.withHandlerOptions {
+	if !config.withLevel && config.withHandlerOptions && config.handlerOptions.Level != nil {
 		lvl := &slog.LevelVar{}
 		lvl.Set(config.handlerOptions.Level.Level())
-		config.handlerOptions.Level = lvl
 		config.level = lvl
 	}
+	config.handlerOptions.Level = config.level
+
+	var replaceAttrDefined bool
+	if config.handlerOptions.ReplaceAttr == nil {
+		replaceAttrDefined = false
+	} else {
+		replaceAttrDefined = true
+	}
+
+	replaceFun := config.handlerOptions.ReplaceAttr
+
+	replaceAttr := func(groups []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.LevelKey {
+			level := a.Value.Any().(slog.Level)
+			switch level {
+			case LevelTrace:
+				a.Value = slog.StringValue("Trace")
+			case slog.LevelDebug:
+				a.Value = slog.StringValue("Debug")
+			case slog.LevelInfo:
+				a.Value = slog.StringValue("Info")
+			case LevelNotice:
+				a.Value = slog.StringValue("Notice")
+			case slog.LevelWarn:
+				a.Value = slog.StringValue("Warn")
+			case slog.LevelError:
+				a.Value = slog.StringValue("Error")
+			case LevelFatal:
+				a.Value = slog.StringValue("Fatal")
+			default:
+				a.Value = slog.StringValue("Warn")
+			}
+		}
+		if replaceAttrDefined {
+			return replaceFun(groups, a)
+		} else {
+			return a
+		}
+	}
+	config.handlerOptions.ReplaceAttr = replaceAttr
 
 	return &Logger{
 		l:   slog.New(slog.NewJSONHandler(config.output, config.handlerOptions)),
