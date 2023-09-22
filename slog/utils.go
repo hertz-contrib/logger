@@ -22,14 +22,20 @@ import (
 
 func hLevelToSLevel(level hlog.Level) (lvl slog.Level) {
 	switch level {
-	case hlog.LevelTrace, hlog.LevelDebug:
+	case hlog.LevelTrace:
+		lvl = LevelTrace
+	case hlog.LevelDebug:
 		lvl = slog.LevelDebug
 	case hlog.LevelInfo:
 		lvl = slog.LevelInfo
-	case hlog.LevelWarn, hlog.LevelNotice:
+	case hlog.LevelWarn:
 		lvl = slog.LevelWarn
-	case hlog.LevelError, hlog.LevelFatal:
+	case hlog.LevelNotice:
+		lvl = LevelNotice
+	case hlog.LevelError:
 		lvl = slog.LevelError
+	case hlog.LevelFatal:
+		lvl = LevelFatal
 	default:
 		lvl = slog.LevelWarn
 	}

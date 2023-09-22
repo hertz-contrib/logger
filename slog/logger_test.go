@@ -17,6 +17,7 @@ package slog
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"log/slog"
 	"os"
 	"testing"
@@ -100,9 +101,12 @@ func TestWithLevel(t *testing.T) {
 
 func TestWithHandlerOptions(t *testing.T) {
 	buf := new(bytes.Buffer)
-	lvl := &slog.LevelVar{}
-	lvl.Set(slog.LevelError)
-	logger := NewLogger(WithHandlerOptions(&slog.HandlerOptions{Level: lvl}))
+	logger := NewLogger(WithHandlerOptions(&slog.HandlerOptions{Level: slog.LevelError, ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.MessageKey {
+			a.Key = "content"
+		}
+		return a
+	}}))
 
 	hlog.SetLogger(logger)
 	hlog.SetOutput(buf)
@@ -117,4 +121,77 @@ func TestWithHandlerOptions(t *testing.T) {
 
 	hlog.Info(infoMsg)
 	assert.Contains(t, buf.String(), infoMsg)
+	assert.Contains(t, buf.String(), "content")
+
+	buf.Reset()
+	hlog.SetLevel(hlog.LevelTrace)
+
+	testCase := []struct {
+		levelName string
+		method    func(...any)
+		msg       string
+	}{
+		{
+			"Trace",
+			hlog.Trace,
+			traceMsg,
+		},
+		{
+			"Debug",
+			hlog.Debug,
+			debugMsg,
+		},
+		{
+			"Info",
+			hlog.Info,
+			infoMsg,
+		},
+		{
+			"Notice",
+			hlog.Notice,
+			noticeMsg,
+		},
+		{
+			"Warn",
+			hlog.Warn,
+			warnMsg,
+		},
+		{
+			"Error",
+			hlog.Error,
+			errorMsg,
+		},
+		{
+			"Fatal",
+			hlog.Fatal,
+			fatalMsg,
+		},
+	}
+
+	for _, tc := range testCase {
+		tc.method(tc.msg)
+		assert.Contains(t, buf.String(), tc.levelName)
+		assert.Contains(t, buf.String(), tc.msg)
+		buf.Reset()
+	}
+}
+
+func TestWithoutLevel(t *testing.T) {
+	buf := new(bytes.Buffer)
+	logger := NewLogger(WithHandlerOptions(&slog.HandlerOptions{AddSource: true}))
+
+	hlog.SetLogger(logger)
+	hlog.SetOutput(buf)
+
+	hlog.CtxInfof(context.TODO(), "hello %s", "hertz")
+	assert.Contains(t, buf.String(), "source")
+}
+
+func TestWithOutput(t *testing.T) {
+	buf := new(bytes.Buffer)
+	logger := NewLogger(WithOutput(buf))
+	hlog.SetLogger(logger)
+
+	hlog.CtxErrorf(context.TODO(), errorMsg)
+	assert.Contains(t, buf.String(), errorMsg)
 }
