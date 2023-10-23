@@ -101,6 +101,7 @@ func main() {
 	)
 	defer logger.Sync()
 
+	hlog.SetLogger(logger)
 	hlog.Infof("hello %s", "hertz")
 }
 
