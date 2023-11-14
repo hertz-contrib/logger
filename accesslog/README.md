@@ -253,3 +253,36 @@ func main() {
 }
 
 ```
+
+### Log By Condition
+
+We can add a method `logConditionFunc` to determine whether to log based on the conditions.
+
+Sample Code:
+
+```go
+package main
+
+import (
+	"context"
+
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hertz-contrib/logger/accesslog"
+)
+
+func main() {
+	h := server.Default(server.WithHostPorts(":8081"))
+	h.GET("/ping", func(c context.Context, ctx *app.RequestContext) {
+		ctx.JSON(200, map[string]string{"ping": "pong"})
+	})
+	h.Use(accesslog.New(accesslog.WithLogConditionFunc(func(ctx context.Context, c *app.RequestContext) bool {
+		if c.FullPath() == "/ping" {
+			return false
+		} else {
+			return true
+		}
+	})))
+	h.Spin()
+}
+```
