@@ -111,6 +111,10 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 
 		c.Next(ctx)
 
+		if !cfg.logConditionFunc(ctx, c) {
+			return
+		}
+
 		if cfg.enableLatency {
 			stop = time.Now()
 			c.Set("stop", stop)

@@ -51,6 +51,7 @@ import (
 )
 
 type (
+	logConditionFunc func(ctx context.Context, c *app.RequestContext) bool
 	// options defines the config for middleware.
 	options struct {
 		// format defines the logging tags
@@ -78,6 +79,7 @@ type (
 		// Optional. Default: time.Local
 		timeZoneLocation *time.Location
 		enableLatency    bool
+		logConditionFunc logConditionFunc
 	}
 
 	Option     func(o *options)
@@ -93,6 +95,9 @@ func newOptions(opts ...Option) *options {
 		timeZoneLocation: time.Local,
 		timeInterval:     500 * time.Millisecond,
 		logFunc:          hlog.CtxInfof,
+		logConditionFunc: func(ctx context.Context, c *app.RequestContext) bool {
+			return true
+		},
 	}
 
 	for _, opt := range opts {
@@ -134,5 +139,12 @@ func WithAccessLogFunc(f func(ctx context.Context, format string, v ...interface
 func WithTimeZoneLocation(loc *time.Location) Option {
 	return func(o *options) {
 		o.timeZoneLocation = loc
+	}
+}
+
+// WithLogConditionFunc set logConditionFunc
+func WithLogConditionFunc(f logConditionFunc) Option {
+	return func(o *options) {
+		o.logConditionFunc = f
 	}
 }
