@@ -44,16 +44,15 @@ package accesslog
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/bytebufferpool"
-	"github.com/hertz-contrib/logger/accesslog/internal/fasttemplate"
 )
 
 var defaultFormat = " %s | %3d | %7v | %-7s | %-s "
@@ -70,8 +69,6 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 	cfg := newOptions(opts...)
 	// Check if format contains latency
 	cfg.enableLatency = strings.Contains(cfg.format, "${latency}")
-
-	tmpl := fasttemplate.New(cfg.format, "${", "}")
 
 	// Create correct time format
 	var timestamp atomic.Value
@@ -93,20 +90,34 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 
 	// Set PID once and add tag
 	pid := strconv.Itoa(os.Getpid())
-	Tags[TagPid] = func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
-		return buf.WriteString(pid)
+
+	dataPool := sync.Pool{
+		New: func() interface{} {
+			return &Data{}
+		},
 	}
-	Tags[TagTime] = func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error) {
-		return buf.WriteString(timestamp.Load().(string))
+
+	// instead of analyzing the template inside(handler) each time, this is done once before
+	// and we create several slices of the same length with the functions to be executed and fixed parts.
+	tmplChain, logFunChain, err := buildLogFuncChain(cfg, Tags)
+	if err != nil {
+		panic(err)
 	}
 
 	return func(ctx context.Context, c *app.RequestContext) {
 		var start, stop time.Time
 
+		// Logger data
+		data := dataPool.Get().(*Data) //nolint:forcetypeassert,errcheck // We store nothing else in the pool
+		// no need for a reset, as long as we always override everything
+		data.Pid = pid
+		data.Timestamp = timestamp
+		// put data back in the pool
+		defer dataPool.Put(data)
+
 		// Set latency start time
 		if cfg.enableLatency {
-			start = time.Now()
-			c.Set("start", start)
+			data.Start = time.Now()
 		}
 
 		c.Next(ctx)
@@ -116,8 +127,7 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 		}
 
 		if cfg.enableLatency {
-			stop = time.Now()
-			c.Set("stop", stop)
+			data.Stop = time.Now()
 		}
 
 		// Get new buffer
@@ -138,12 +148,20 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 			return
 		}
 
-		_, err := tmpl.ExecuteFunc(buf, func(w io.Writer, tag string) (int, error) {
-			if function, ok := Tags[tag]; ok {
-				return function(ctx, c, buf)
+		// Loop over template parts execute dynamic parts and add fixed parts to the buffer
+		for i, logFunc := range logFunChain {
+			if logFunc == nil {
+				_, _ = buf.Write(tmplChain[i]) //nolint:errcheck // This will never fail
+			} else if tmplChain[i] == nil {
+				_, err = logFunc(buf, c, data, "")
+			} else {
+				_, err = logFunc(buf, c, data, unsafeString(tmplChain[i]))
 			}
-			return 0, nil
-		})
+			if err != nil {
+				break
+			}
+		}
+
 		// Also write errors to the buffer
 		if err != nil {
 			_, _ = buf.WriteString(err.Error())
@@ -153,10 +171,10 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 	}
 }
 
-func appendInt(buf *bytebufferpool.ByteBuffer, v int) (int, error) {
-	old := len(buf.B)
-	buf.B = appendUint(buf.B, v)
-	return len(buf.B) - old, nil
+func appendInt(output Buffer, v int) (int, error) {
+	old := output.Len()
+	output.Set(appendUint(output.Bytes(), v))
+	return output.Len() - old, nil
 }
 
 func appendUint(dst []byte, n int) []byte {

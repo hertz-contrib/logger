@@ -46,12 +46,13 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/common/bytebufferpool"
+
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 )
 
 type (
 	logConditionFunc func(ctx context.Context, c *app.RequestContext) bool
+
 	// options defines the config for middleware.
 	options struct {
 		// format defines the logging tags
@@ -82,8 +83,7 @@ type (
 		logConditionFunc logConditionFunc
 	}
 
-	Option     func(o *options)
-	logTagFunc func(ctx context.Context, c *app.RequestContext, buf *bytebufferpool.ByteBuffer) (int, error)
+	Option func(o *options)
 )
 
 var defaultTagFormat = "[${time}] ${status} - ${latency} ${method} ${path}"
