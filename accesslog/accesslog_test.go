@@ -44,9 +44,12 @@ package accesslog
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/cloudwego/hertz/pkg/protocol"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/bytebufferpool"
@@ -119,4 +122,44 @@ func TestRespBody(t *testing.T) {
 	w = request.Result()
 	assert.DeepEqual(t, 200, w.StatusCode())
 	assert.DeepEqual(t, postBody+"\n", buf.String()[len(buf.String())-len(postBody)-1:])
+}
+
+// go test -v -run=^$ -bench=Benchmark_Logger -benchmem -count=4
+func Benchmark_AccessLog(b *testing.B) {
+	hlog.SetOutput(io.Discard)
+
+	benchSetup := func(b *testing.B, engine *route.Engine) {
+		b.Helper()
+
+		ctx := engine.NewContext()
+		req := protocol.NewRequest("GET", "/", nil)
+
+		b.ReportAllocs()
+		b.ResetTimer()
+
+		for n := 0; n < b.N; n++ {
+			req.CopyTo(&ctx.Request)
+			engine.ServeHTTP(context.Background(), ctx)
+			ctx.Reset()
+		}
+	}
+
+	b.Run("Base", func(bb *testing.B) {
+		engine := route.NewEngine(config.NewOptions([]config.Option{}))
+		engine.Use(New(WithFormat("${bytesReceived} ${bytesSent} ${status}")))
+		engine.GET("/", func(c context.Context, ctx *app.RequestContext) {
+			ctx.Response.Header.Set("test", "test")
+
+			ctx.String(200, "hello world")
+		})
+		benchSetup(bb, engine)
+	})
+
+	b.Run("DefaultFormat", func(bb *testing.B) {
+		engine := route.NewEngine(config.NewOptions([]config.Option{}))
+		engine.Use(New())
+		engine.GET("/", func(c context.Context, ctx *app.RequestContext) {
+			ctx.String(200, "hello world")
+		})
+	})
 }
