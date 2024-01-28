@@ -104,16 +104,23 @@ func (l *Logger) Logf(level hlog.Level, format string, kvs ...interface{}) {
 }
 
 func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, kvs ...interface{}) {
-	log := l.l.Sugar()
+	zapLogger := l.l
 	if len(l.config.extraKeys) > 0 {
 		for _, k := range l.config.extraKeys {
 			if l.config.extraKeyAsStr {
-				log = log.With(string(k), ctx.Value(string(k)))
+				v := ctx.Value(string(k))
+				if v != nil {
+					zapLogger = zapLogger.With(zap.Any(string(k), v))
+				}
 			} else {
-				log = log.With(string(k), ctx.Value(k))
+				v := ctx.Value(k)
+				if v != nil {
+					zapLogger = zapLogger.With(zap.Any(string(k), v))
+				}
 			}
 		}
 	}
+	log := zapLogger.Sugar()
 	switch level {
 	case hlog.LevelDebug, hlog.LevelTrace:
 		log.Debugf(format, kvs...)
