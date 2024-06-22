@@ -104,6 +104,10 @@ func (l *Logger) Logf(level hlog.Level, format string, kvs ...interface{}) {
 }
 
 func (l *Logger) CtxLogf(level hlog.Level, ctx context.Context, format string, kvs ...interface{}) {
+	zLevel := hLevelToZapLevel(level)
+	if !l.config.coreConfigs[0].Lvl.Enabled(zLevel) {
+		return
+	}
 	zapLogger := l.l
 	if len(l.config.extraKeys) > 0 {
 		for _, k := range l.config.extraKeys {
@@ -222,21 +226,7 @@ func (l *Logger) CtxFatalf(ctx context.Context, format string, v ...interface{})
 }
 
 func (l *Logger) SetLevel(level hlog.Level) {
-	var lvl zapcore.Level
-	switch level {
-	case hlog.LevelTrace, hlog.LevelDebug:
-		lvl = zap.DebugLevel
-	case hlog.LevelInfo:
-		lvl = zap.InfoLevel
-	case hlog.LevelWarn, hlog.LevelNotice:
-		lvl = zap.WarnLevel
-	case hlog.LevelError:
-		lvl = zap.ErrorLevel
-	case hlog.LevelFatal:
-		lvl = zap.FatalLevel
-	default:
-		lvl = zap.WarnLevel
-	}
+	lvl := hLevelToZapLevel(level)
 
 	l.config.coreConfigs[0].Lvl = lvl
 

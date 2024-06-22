@@ -14,6 +14,12 @@
 
 package zap
 
+import (
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
 // InArray check if a string in a slice
 func InArray(key ExtraKey, arr []ExtraKey) bool {
 	for _, k := range arr {
@@ -22,4 +28,22 @@ func InArray(key ExtraKey, arr []ExtraKey) bool {
 		}
 	}
 	return false
+}
+
+var hLevelToZapLevelMap = map[hlog.Level]zapcore.Level{
+	hlog.LevelTrace:  zapcore.DebugLevel,
+	hlog.LevelDebug:  zapcore.DebugLevel,
+	hlog.LevelInfo:   zapcore.InfoLevel,
+	hlog.LevelNotice: zapcore.WarnLevel,
+	hlog.LevelWarn:   zapcore.WarnLevel,
+	hlog.LevelError:  zapcore.ErrorLevel,
+	hlog.LevelFatal:  zapcore.FatalLevel,
+}
+
+func hLevelToZapLevel(level hlog.Level) zapcore.Level {
+	if zapLevel, ok := hLevelToZapLevelMap[level]; ok {
+		return zapLevel
+	}
+
+	return zap.WarnLevel
 }
