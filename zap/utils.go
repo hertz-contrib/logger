@@ -30,20 +30,21 @@ func InArray(key ExtraKey, arr []ExtraKey) bool {
 	return false
 }
 
-var hLevelToZapLevelMap = map[hlog.Level]zapcore.Level{
-	hlog.LevelTrace:  zapcore.DebugLevel,
-	hlog.LevelDebug:  zapcore.DebugLevel,
-	hlog.LevelInfo:   zapcore.InfoLevel,
-	hlog.LevelNotice: zapcore.WarnLevel,
-	hlog.LevelWarn:   zapcore.WarnLevel,
-	hlog.LevelError:  zapcore.ErrorLevel,
-	hlog.LevelFatal:  zapcore.FatalLevel,
-}
-
 func hLevelToZapLevel(level hlog.Level) zapcore.Level {
-	if zapLevel, ok := hLevelToZapLevelMap[level]; ok {
-		return zapLevel
+	var lvl zapcore.Level
+	switch level {
+	case hlog.LevelTrace, hlog.LevelDebug:
+		lvl = zap.DebugLevel
+	case hlog.LevelInfo:
+		lvl = zap.InfoLevel
+	case hlog.LevelWarn, hlog.LevelNotice:
+		lvl = zap.WarnLevel
+	case hlog.LevelError:
+		lvl = zap.ErrorLevel
+	case hlog.LevelFatal:
+		lvl = zap.FatalLevel
+	default:
+		lvl = zap.WarnLevel
 	}
-
-	return zap.WarnLevel
+	return lvl
 }
