@@ -6,6 +6,7 @@ require (
 	github.com/cloudwego/hertz v0.6.2
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.23.0
+	github.com/cloudwego-contrib/cwgo-pkg/log/logging/zap v0.0.0
 )
 
 require (
@@ -15,3 +16,4 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+replace github.com/cloudwego-contrib/cwgo-pkg/log/logging/zap => D:\Projects\Go\cwgo-pkg\log\logging\zap

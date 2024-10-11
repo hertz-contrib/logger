@@ -42,47 +42,19 @@
 package logrus
 
 import (
+	cwlogrus "github.com/cloudwego-contrib/cwgo-pkg/log/logging/logrus"
 	"github.com/sirupsen/logrus"
 )
 
 // Option logger options
-type Option interface {
-	apply(cfg *config)
-}
-
-type option func(cfg *config)
-
-func (fn option) apply(cfg *config) {
-	fn(cfg)
-}
-
-type config struct {
-	logger *logrus.Logger
-	hooks  []logrus.Hook
-}
-
-func defaultConfig() *config {
-	// new logger
-	logger := logrus.New()
-	// default json format
-	logger.SetFormatter(new(logrus.JSONFormatter))
-
-	return &config{
-		logger: logger,
-		hooks:  []logrus.Hook{},
-	}
-}
+type Option = cwlogrus.Option
 
 // WithLogger configures logger
 func WithLogger(logger *logrus.Logger) Option {
-	return option(func(cfg *config) {
-		cfg.logger = logger
-	})
+	return cwlogrus.WithLogger(logger)
 }
 
 // WithHook configures logrus hook
 func WithHook(hook logrus.Hook) Option {
-	return option(func(cfg *config) {
-		cfg.hooks = append(cfg.hooks, hook)
-	})
+	return cwlogrus.WithHook(hook)
 }
