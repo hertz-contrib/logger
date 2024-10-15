@@ -5,6 +5,8 @@ github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1
 github.com/bytedance/sonic v1.8.1/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
 github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06/go.mod h1:DH46F32mSOjUmXrMHnKwZdA8wcEefY7UVqBKYGjpdQY=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
+github.com/cloudwego-contrib/cwgo-pkg/log/logging/slog v0.0.0-20241014044734-80a98dbe0b6a h1:PVc/pLMk1UYdfzxazNDAWWZe8k3mZlAVcKkTuUarVgk=
+github.com/cloudwego-contrib/cwgo-pkg/log/logging/slog v0.0.0-20241014044734-80a98dbe0b6a/go.mod h1:BPZTpDxdnXH2ibM2/Ym7E8RHr1u9Vj5vW3Chm4cUpjI=
 github.com/cloudwego/hertz v0.9.2 h1:VbqddZ5RuvcgxzfxvXcmTiRisGYoo0+WnHGeDJKhjqI=
 github.com/cloudwego/hertz v0.9.2/go.mod h1:cs8dH6unM4oaJ5k9m6pqbgLBPqakGWMG0+cthsxitsg=
 github.com/cloudwego/netpoll v0.6.0/go.mod h1:xVefXptcyheopwNDZjDPcfU6kIjZXZ4nY550k1yH9eQ=

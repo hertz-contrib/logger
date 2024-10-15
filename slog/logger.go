@@ -35,5 +35,7 @@ func NewLogger(opts ...Option) *Logger {
 
 }
 
-// Logger slog impl
-type Logger = cwslog.Logger
+type (
+	// Logger slog impl
+	Logger = cwslog.Logger
+)
