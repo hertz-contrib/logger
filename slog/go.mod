@@ -3,7 +3,6 @@ module github.com/hertz-contrib/logger/slog
 go 1.21.1
 
 require (
-	github.com/cloudwego-contrib/cwgo-pkg/log/logging/slog v0.0.0-00010101000000-000000000000
 	github.com/cloudwego/hertz v0.9.2
 	github.com/stretchr/testify v1.9.0
 )
@@ -15,4 +14,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/cloudwego-contrib/cwgo-pkg/log/logging/slog => D:\Projects\Go\cwgo-pkg\log\logging\slog
+

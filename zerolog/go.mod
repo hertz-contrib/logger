@@ -4,7 +4,6 @@ go 1.21
 
 
 require (
-	github.com/cloudwego-contrib/cwgo-pkg/log/logging/zerolog v0.0.0
 	github.com/cloudwego/hertz v0.9.2
 	github.com/rs/zerolog v1.30.0
 	github.com/stretchr/testify v1.9.0
@@ -26,4 +25,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/cloudwego-contrib/cwgo-pkg/log/logging/zerolog => D:\Projects\Go\cwgo-pkg\log\logging\zerolog
+
