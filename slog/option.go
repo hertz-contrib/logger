@@ -23,10 +23,6 @@ import (
 
 type Option = cwslog.Option
 
-type config struct {
-	options []cwslog.Option
-}
-
 func WithLevel(lvl *slog.LevelVar) Option {
 	return cwslog.WithLevel(lvl)
 }
