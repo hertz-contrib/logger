@@ -13,31 +13,3 @@
 // limitations under the License.
 
 package slog
-
-import (
-	"log/slog"
-
-	"github.com/cloudwego/hertz/pkg/common/hlog"
-)
-
-func hLevelToSLevel(level hlog.Level) (lvl slog.Level) {
-	switch level {
-	case hlog.LevelTrace:
-		lvl = LevelTrace
-	case hlog.LevelDebug:
-		lvl = slog.LevelDebug
-	case hlog.LevelInfo:
-		lvl = slog.LevelInfo
-	case hlog.LevelWarn:
-		lvl = slog.LevelWarn
-	case hlog.LevelNotice:
-		lvl = LevelNotice
-	case hlog.LevelError:
-		lvl = slog.LevelError
-	case hlog.LevelFatal:
-		lvl = LevelFatal
-	default:
-		lvl = slog.LevelWarn
-	}
-	return
-}

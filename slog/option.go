@@ -27,12 +27,6 @@ type config struct {
 	options []cwslog.Option
 }
 
-func defaultConfig() *config {
-	return &config{
-		options: []cwslog.Option{},
-	}
-}
-
 func WithLevel(lvl *slog.LevelVar) Option {
 	return cwslog.WithLevel(lvl)
 }
