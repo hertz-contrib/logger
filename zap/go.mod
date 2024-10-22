@@ -2,8 +2,6 @@ module github.com/hertz-contrib/logger/zap
 
 go 1.21
 
-toolchain go1.21.12
-
 require (
 	github.com/cloudwego-contrib/cwgo-pkg/log/logging/zap v0.0.0-20241014044734-80a98dbe0b6a
 	github.com/cloudwego/hertz v0.9.2
