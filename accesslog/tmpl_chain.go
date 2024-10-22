@@ -45,7 +45,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"reflect"
 	"unsafe"
 )
 
@@ -137,9 +136,7 @@ func unsafeBytes(s string) []byte {
 		return nil
 	}
 
-	return (*[MaxStringLen]byte)(unsafe.Pointer(
-		(*reflect.StringHeader)(unsafe.Pointer(&s)).Data),
-	)[:len(s):len(s)]
+	return (*[MaxStringLen]byte)(unsafe.Pointer(unsafe.StringData(s)))[:len(s):len(s)]
 }
 
 func unsafeString(b []byte) string {
