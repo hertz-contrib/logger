@@ -53,7 +53,5 @@ type Logger = logrus.Logger
 
 // NewLogger create a logger
 func NewLogger(opts ...Option) *Logger {
-
 	return logrus.NewLogger(opts...)
-
 }

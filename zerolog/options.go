@@ -17,8 +17,9 @@
 package zerolog
 
 import (
-	cwzerolog "github.com/cloudwego-contrib/cwgo-pkg/log/logging/zerolog"
 	"io"
+
+	cwzerolog "github.com/cloudwego-contrib/cwgo-pkg/log/logging/zerolog"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/rs/zerolog"
@@ -35,7 +36,7 @@ func WithOutput(out io.Writer) Opt {
 
 // WithLevel allows to specify the level of the logger. By default, it is set to WarnLevel.
 func WithLevel(level hlog.Level) Opt {
-	//lvl := matchHlogLevel(level)
+	// lvl := matchHlogLevel(level)
 	return cwzerolog.WithLevel(level)
 }
 
@@ -56,7 +57,7 @@ func WithTimestamp() Opt {
 
 // WithFormattedTimestamp adds a formatted timestamp field to the logger's context
 func WithFormattedTimestamp(format string) Opt {
-	//zerolog.TimeFieldFormat = format
+	// zerolog.TimeFieldFormat = format
 	return cwzerolog.WithFormattedTimestamp(format)
 }
 

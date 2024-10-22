@@ -28,7 +28,6 @@ type config struct {
 }
 
 func defaultConfig() *config {
-
 	return &config{
 		options: []cwslog.Option{},
 	}

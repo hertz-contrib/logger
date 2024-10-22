@@ -17,10 +17,11 @@
 package zerolog
 
 import (
+	"io"
+
 	cwzerolog "github.com/cloudwego-contrib/cwgo-pkg/log/logging/zerolog"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/rs/zerolog"
-	"io"
 )
 
 var _ hlog.FullLogger = (*Logger)(nil)
@@ -49,6 +50,5 @@ func From(log zerolog.Logger, options ...Opt) *Logger {
 
 // GetLogger returns the default logger instance
 func GetLogger() (Logger, error) {
-
 	return cwzerolog.GetLogger()
 }

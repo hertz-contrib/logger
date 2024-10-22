@@ -30,9 +30,7 @@ const (
 var _ hlog.FullLogger = (*Logger)(nil)
 
 func NewLogger(opts ...Option) *Logger {
-
 	return cwslog.NewLogger(opts...)
-
 }
 
 type (

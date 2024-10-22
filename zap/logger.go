@@ -24,6 +24,5 @@ var _ hlog.FullLogger = (*Logger)(nil)
 type Logger = cwzap.Logger
 
 func NewLogger(opts ...Option) *Logger {
-
 	return cwzap.NewLogger(opts...)
 }
