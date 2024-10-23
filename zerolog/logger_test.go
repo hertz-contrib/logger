@@ -222,7 +222,7 @@ func TestCtxTracef(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New()
 	l.SetOutput(b)
-	ctx := l.log.WithContext(context.Background())
+	ctx := l.Unwrap().WithContext(context.Background())
 
 	l.CtxTracef(ctx, "foo%s", "bar")
 	assert.Equal(
@@ -238,7 +238,7 @@ func TestCtxDebugf(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New()
 	l.SetOutput(b)
-	ctx := l.log.WithContext(context.Background())
+	ctx := l.Unwrap().WithContext(context.Background())
 
 	l.CtxDebugf(ctx, "foo%s", "bar")
 	assert.Equal(
@@ -254,7 +254,7 @@ func TestCtxInfof(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New()
 	l.SetOutput(b)
-	ctx := l.log.WithContext(context.Background())
+	ctx := l.Unwrap().WithContext(context.Background())
 
 	l.CtxInfof(ctx, "foo%s", "bar")
 	assert.Equal(
@@ -270,7 +270,7 @@ func TestCtxNoticef(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New()
 	l.SetOutput(b)
-	ctx := l.log.WithContext(context.Background())
+	ctx := l.Unwrap().WithContext(context.Background())
 
 	l.CtxNoticef(ctx, "foo%s", "bar")
 	assert.Equal(
@@ -286,7 +286,7 @@ func TestCtxWarnf(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New()
 	l.SetOutput(b)
-	ctx := l.log.WithContext(context.Background())
+	ctx := l.Unwrap().WithContext(context.Background())
 
 	l.CtxWarnf(ctx, "foo%s", "bar")
 	assert.Equal(
@@ -302,7 +302,7 @@ func TestCtxErrorf(t *testing.T) {
 	b := &bytes.Buffer{}
 	l := New()
 	l.SetOutput(b)
-	ctx := l.log.WithContext(context.Background())
+	ctx := l.Unwrap().WithContext(context.Background())
 
 	l.CtxErrorf(ctx, "foo%s", "bar")
 	assert.Equal(
@@ -318,11 +318,11 @@ func TestSetLevel(t *testing.T) {
 	l := New()
 
 	l.SetLevel(hlog.LevelDebug)
-	assert.Equal(t, l.log.GetLevel(), zerolog.DebugLevel)
+	assert.Equal(t, l.Unwrap().GetLevel(), zerolog.DebugLevel)
 
 	l.SetLevel(hlog.LevelDebug)
-	assert.Equal(t, l.log.GetLevel(), zerolog.DebugLevel)
+	assert.Equal(t, l.Unwrap().GetLevel(), zerolog.DebugLevel)
 
 	l.SetLevel(hlog.LevelError)
-	assert.Equal(t, l.log.GetLevel(), zerolog.ErrorLevel)
+	assert.Equal(t, l.Unwrap().GetLevel(), zerolog.ErrorLevel)
 }

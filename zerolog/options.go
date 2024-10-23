@@ -19,103 +19,66 @@ package zerolog
 import (
 	"io"
 
+	cwzerolog "github.com/cloudwego-contrib/cwgo-pkg/log/logging/zerolog"
+
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/rs/zerolog"
 )
 
 type (
-	Options struct {
-		context zerolog.Context
-		level   zerolog.Level
-	}
-
-	Opt func(opts *Options)
+	Opt = cwzerolog.Opt
 )
-
-func newOptions(log zerolog.Logger, options []Opt) *Options {
-	opts := &Options{
-		context: log.With(),
-		level:   log.GetLevel(),
-	}
-
-	for _, set := range options {
-		set(opts)
-	}
-
-	return opts
-}
 
 // WithOutput allows to specify the output of the logger. By default, it is set to os.Stdout.
 func WithOutput(out io.Writer) Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Logger().Output(out).With()
-	}
+	return cwzerolog.WithOutput(out)
 }
 
 // WithLevel allows to specify the level of the logger. By default, it is set to WarnLevel.
 func WithLevel(level hlog.Level) Opt {
-	lvl := matchHlogLevel(level)
-	return func(opts *Options) {
-		opts.context = opts.context.Logger().Level(lvl).With()
-		opts.level = lvl
-	}
+	// lvl := matchHlogLevel(level)
+	return cwzerolog.WithLevel(level)
 }
 
 // WithField adds a field to the logger's context
 func WithField(name string, value interface{}) Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Interface(name, value)
-	}
+	return cwzerolog.WithField(name, value)
 }
 
 // WithFields adds fields to the logger's context
 func WithFields(fields map[string]interface{}) Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Fields(fields)
-	}
+	return cwzerolog.WithFields(fields)
 }
 
 // WithTimestamp adds a timestamp field to the logger's context
 func WithTimestamp() Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Timestamp()
-	}
+	return cwzerolog.WithTimestamp()
 }
 
 // WithFormattedTimestamp adds a formatted timestamp field to the logger's context
 func WithFormattedTimestamp(format string) Opt {
-	zerolog.TimeFieldFormat = format
-	return func(opts *Options) {
-		opts.context = opts.context.Timestamp()
-	}
+	// zerolog.TimeFieldFormat = format
+	return cwzerolog.WithFormattedTimestamp(format)
 }
 
 // WithCaller adds a caller field to the logger's context
 func WithCaller() Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Caller()
-	}
+	return cwzerolog.WithCaller()
 }
 
 // WithCallerSkipFrameCount adds a caller field to the logger's context
 // The specified skipFrameCount int will override the global CallerSkipFrameCount for this context's respective logger.
 // If set to -1 the global CallerSkipFrameCount will be used.
 func WithCallerSkipFrameCount(skipFrameCount int) Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.CallerWithSkipFrameCount(skipFrameCount)
-	}
+	return cwzerolog.WithCallerSkipFrameCount(skipFrameCount)
 }
 
 // WithHook adds a hook to the logger's context
 func WithHook(hook zerolog.Hook) Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Logger().Hook(hook).With()
-	}
+	return cwzerolog.WithHook(hook)
 }
 
 // WithHookFunc adds hook function to the logger's context
 func WithHookFunc(hook zerolog.HookFunc) Opt {
-	return func(opts *Options) {
-		opts.context = opts.context.Logger().Hook(hook).With()
-	}
+	return cwzerolog.WithHookFunc(hook)
 }

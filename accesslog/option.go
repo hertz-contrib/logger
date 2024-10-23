@@ -45,106 +45,41 @@ import (
 	"context"
 	"time"
 
-	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego-contrib/cwgo-pkg/log/accesslog"
 
-	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/cloudwego/hertz/pkg/app"
 )
 
 type (
-	logConditionFunc func(ctx context.Context, c *app.RequestContext) bool
-
-	// options defines the config for middleware.
-	options struct {
-		// format defines the logging tags
-		//
-		// Optional. Default: [${time}] ${status} - ${latency} ${method} ${path}\n
-		format string
-
-		// timeFormat defines timestamp format  https://programming.guide/go/format-parse-string-time-date-example.html
-		//
-		// Optional. Default: 15:04:05
-		timeFormat string
-
-		// timeInterval is the delay before the timestamp is updated
-		//
-		// Optional. Default: 500 * time.Millisecond
-		timeInterval time.Duration
-
-		// logFunc custom define log function
-		//
-		// Optional. Default: hlog.CtxInfof
-		logFunc func(ctx context.Context, format string, v ...interface{})
-
-		// timeZoneLocation can be specified time zone
-		//
-		// Optional. Default: time.Local
-		timeZoneLocation *time.Location
-		enableLatency    bool
-		logConditionFunc logConditionFunc
-	}
-
-	Option func(o *options)
+	Option = accesslog.Option
 )
-
-var defaultTagFormat = "[${time}] ${status} - ${latency} ${method} ${path}"
-
-func newOptions(opts ...Option) *options {
-	cfg := &options{
-		format:           defaultTagFormat,
-		timeFormat:       "15:04:05",
-		timeZoneLocation: time.Local,
-		timeInterval:     500 * time.Millisecond,
-		logFunc:          hlog.CtxInfof,
-		logConditionFunc: func(ctx context.Context, c *app.RequestContext) bool {
-			return true
-		},
-	}
-
-	for _, opt := range opts {
-		opt(cfg)
-	}
-
-	return cfg
-}
 
 // WithFormat set log format
 func WithFormat(s string) Option {
-	return func(o *options) {
-		o.format = s
-	}
+	return accesslog.WithFormat(s)
 }
 
 // WithTimeFormat set log time format
 func WithTimeFormat(s string) Option {
-	return func(o *options) {
-		o.timeFormat = s
-	}
+	return accesslog.WithTimeFormat(s)
 }
 
 // WithTimeInterval set timestamp refresh interval
 func WithTimeInterval(t time.Duration) Option {
-	return func(o *options) {
-		o.timeInterval = t
-	}
+	return accesslog.WithTimeInterval(t)
 }
 
 // WithAccessLogFunc set print log function
 func WithAccessLogFunc(f func(ctx context.Context, format string, v ...interface{})) Option {
-	return func(o *options) {
-		o.logFunc = f
-	}
+	return accesslog.WithAccessLogFunc(f)
 }
 
 // WithTimeZoneLocation set timestamp zone
 func WithTimeZoneLocation(loc *time.Location) Option {
-	return func(o *options) {
-		o.timeZoneLocation = loc
-	}
+	return accesslog.WithTimeZoneLocation(loc)
 }
 
 // WithLogConditionFunc set logConditionFunc
-func WithLogConditionFunc(f logConditionFunc) Option {
-	return func(o *options) {
-		o.logConditionFunc = f
-	}
+func WithLogConditionFunc(f func(ctx context.Context, c *app.RequestContext) bool) Option {
+	return accesslog.WithLogConditionFunc(f)
 }

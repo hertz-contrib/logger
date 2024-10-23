@@ -17,61 +17,20 @@ package slog
 import (
 	"io"
 	"log/slog"
-	"os"
 
-	"github.com/cloudwego/hertz/pkg/common/hlog"
+	cwslog "github.com/cloudwego-contrib/cwgo-pkg/log/logging/slog"
 )
 
-type Option interface {
-	apply(cfg *config)
-}
-
-type option func(cfg *config)
-
-func (fn option) apply(cfg *config) {
-	fn(cfg)
-}
-
-type config struct {
-	level              *slog.LevelVar
-	withLevel          bool
-	handlerOptions     *slog.HandlerOptions
-	withHandlerOptions bool
-	output             io.Writer
-}
-
-func defaultConfig() *config {
-	lvl := &slog.LevelVar{}
-	lvl.Set(hLevelToSLevel(hlog.LevelInfo))
-
-	handlerOptions := &slog.HandlerOptions{
-		Level: lvl,
-	}
-	return &config{
-		level:              lvl,
-		withLevel:          false,
-		handlerOptions:     handlerOptions,
-		withHandlerOptions: false,
-		output:             os.Stdout,
-	}
-}
+type Option = cwslog.Option
 
 func WithLevel(lvl *slog.LevelVar) Option {
-	return option(func(cfg *config) {
-		cfg.level = lvl
-		cfg.withLevel = true
-	})
+	return cwslog.WithLevel(lvl)
 }
 
 func WithHandlerOptions(opts *slog.HandlerOptions) Option {
-	return option(func(cfg *config) {
-		cfg.handlerOptions = opts
-		cfg.withHandlerOptions = true
-	})
+	return cwslog.WithHandlerOptions(opts)
 }
 
 func WithOutput(writer io.Writer) Option {
-	return option(func(cfg *config) {
-		cfg.output = writer
-	})
+	return cwslog.WithOutput(writer)
 }
