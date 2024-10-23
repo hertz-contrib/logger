@@ -43,8 +43,9 @@ package accesslog
 
 import (
 	"context"
-	"github.com/cloudwego-contrib/cwgo-pkg/log/accesslog"
 	"time"
+
+	"github.com/cloudwego-contrib/cwgo-pkg/log/accesslog"
 
 	"github.com/cloudwego/hertz/pkg/app"
 )
