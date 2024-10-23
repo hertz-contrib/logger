@@ -48,8 +48,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
-var defaultFormat = " %s | %3d | %7v | %-7s | %-s "
-
 func New(opts ...Option) app.HandlerFunc {
 	return accesslog.New(opts...)
 }
