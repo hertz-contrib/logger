@@ -42,134 +42,38 @@
 package accesslog
 
 import (
-	"fmt"
-	"strings"
-	"sync/atomic"
-	"time"
-
-	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego-contrib/cwgo-pkg/log/accesslog"
 )
 
 const (
-	TagPid               = "pid"
-	TagTime              = "time"
-	TagReferer           = "referer"
-	TagProtocol          = "protocol"
-	TagPort              = "port"
-	TagIP                = "ip"
-	TagIPs               = "ips"
-	TagHost              = "host"
-	TagClientIP          = "clientIP"
-	TagMethod            = "method"
-	TagPath              = "path"
-	TagURL               = "url"
-	TagUA                = "ua"
-	TagLatency           = "latency"
-	TagStatus            = "status"
-	TagResBody           = "resBody"
-	TagReqHeaders        = "reqHeaders"
-	TagResHeaders        = "resHeaders"
-	TagQueryStringParams = "queryParams"
-	TagBody              = "body"
-	TagBytesSent         = "bytesSent"
-	TagBytesReceived     = "bytesReceived"
-	TagRoute             = "route"
+	TagPid               = accesslog.TagPid
+	TagTime              = accesslog.TagTime
+	TagReferer           = accesslog.TagReferer
+	TagProtocol          = accesslog.TagProtocol
+	TagPort              = accesslog.TagPort
+	TagIP                = accesslog.TagIP
+	TagIPs               = accesslog.TagIPs
+	TagHost              = accesslog.TagHost
+	TagClientIP          = accesslog.TagClientIP
+	TagMethod            = accesslog.TagMethod
+	TagPath              = accesslog.TagPath
+	TagURL               = accesslog.TagURL
+	TagUA                = accesslog.TagUA
+	TagLatency           = accesslog.TagLatency
+	TagStatus            = accesslog.TagStatus
+	TagResBody           = accesslog.TagResBody
+	TagReqHeaders        = accesslog.TagReqHeaders
+	TagResHeaders        = accesslog.TagResHeaders
+	TagQueryStringParams = accesslog.TagQueryStringParams
+	TagBody              = accesslog.TagBody
+	TagBytesSent         = accesslog.TagBytesSent
+	TagBytesReceived     = accesslog.TagBytesReceived
+	TagRoute             = accesslog.TagRoute
 )
 
-type LogFunc func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error)
+type LogFunc = accesslog.LogFunc
 
 // Data is a struct to define some variables to use in custom logger function.
-type Data struct {
-	Pid       string
-	Start     time.Time
-	Stop      time.Time
-	Timestamp atomic.Value
-}
+type Data = accesslog.Data
 
-var Tags = map[string]LogFunc{
-	TagReferer: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(c.Request.Header.Get("Referer"))
-	},
-	TagProtocol: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Request.URI().Scheme()))
-	},
-	TagPort: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		host := string(c.Request.URI().Host())
-		split := strings.Split(host, ":")
-		return output.WriteString(split[1])
-	},
-	TagIP: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		host := string(c.Request.URI().Host())
-		split := strings.Split(host, ":")
-		return output.WriteString(split[0])
-	},
-	TagIPs: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(c.Request.Header.Get("X-Forwarded-For"))
-	},
-	TagResBody: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Response.Body()))
-	},
-	TagHost: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Request.URI().Host()))
-	},
-	TagClientIP: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(c.ClientIP())
-	},
-	TagPath: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Request.Path()))
-	},
-	TagURL: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Request.Header.RequestURI()))
-	},
-	TagUA: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(c.Request.Header.Get("User-Agent"))
-	},
-	TagBody: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.Write(c.Request.Body())
-	},
-	TagBytesSent: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		if c.Response.Header.ContentLength() < 0 {
-			return appendInt(output, 0)
-		}
-		return appendInt(output, len(c.Response.Body()))
-	},
-	TagBytesReceived: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return appendInt(output, len(c.Request.Body()))
-	},
-	TagRoute: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Path()))
-	},
-	TagStatus: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return appendInt(output, c.Response.StatusCode())
-	},
-	TagReqHeaders: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		reqHeaders := make([]string, 0)
-		c.Request.Header.VisitAll(func(k, v []byte) {
-			reqHeaders = append(reqHeaders, string(k)+"="+string(v))
-		})
-		return output.Write([]byte(strings.Join(reqHeaders, "&")))
-	},
-	TagResHeaders: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		resHeaders := make([]string, 0)
-		c.Response.Header.VisitAll(func(k, v []byte) {
-			resHeaders = append(resHeaders, string(k)+"="+string(v))
-		})
-		return output.Write([]byte(strings.Join(resHeaders, "&")))
-	},
-	TagQueryStringParams: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(c.Request.URI().QueryArgs().String())
-	},
-	TagMethod: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(string(c.Method()))
-	},
-	TagLatency: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		latency := data.Stop.Sub(data.Start)
-		return output.WriteString(fmt.Sprintf("%13v", latency))
-	},
-	TagPid: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(data.Pid)
-	},
-	TagTime: func(output Buffer, c *app.RequestContext, data *Data, extraParam string) (int, error) {
-		return output.WriteString(data.Timestamp.Load().(string))
-	},
-}
+var Tags = accesslog.Tags

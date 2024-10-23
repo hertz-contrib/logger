@@ -2,7 +2,10 @@ module github.com/hertz-contrib/logger/accesslog
 
 go 1.21
 
-require github.com/cloudwego/hertz v0.7.2
+require (
+	github.com/cloudwego-contrib/cwgo-pkg/log/accesslog v0.0.0-00010101000000-000000000000
+	github.com/cloudwego/hertz v0.7.2
+)
 
 require (
 	github.com/bytedance/go-tagexpr/v2 v2.9.2 // indirect
@@ -24,3 +27,5 @@ require (
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
+
+replace github.com/cloudwego-contrib/cwgo-pkg/log/accesslog => github.com/smx-Morgan/cwgo-pkg/log/accesslog v0.0.0-20241019002536-84cf43046703
