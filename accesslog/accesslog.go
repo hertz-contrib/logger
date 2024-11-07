@@ -105,8 +105,6 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 	}
 
 	return func(ctx context.Context, c *app.RequestContext) {
-		var start, stop time.Time
-
 		// Logger data
 		data := dataPool.Get().(*Data) //nolint:forcetypeassert,errcheck // We store nothing else in the pool
 		// no need for a reset, as long as we always override everything
@@ -139,7 +137,7 @@ func new(ctx context.Context, opts ...Option) app.HandlerFunc {
 			_, _ = buf.WriteString(fmt.Sprintf(defaultFormat,
 				timestamp,
 				c.Response.StatusCode(),
-				stop.Sub(start),
+				data.Stop.Sub(data.Start),
 				c.Method(),
 				c.Path(),
 			))
